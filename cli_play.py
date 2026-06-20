@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import random
@@ -14,72 +14,141 @@ from talent_system import (
   TALENTS_BY_TYPE,
   TALENT_TYPE_LABELS,
   talent_nodes_for_category,
+  total_talent_levels,
   talent_bonus,
   talent_level,
   talent_node,
 )
 
 RARITY_SORT_ORDER = ["common", "uncommon", "rare", "epic", "legendary", "mythic"]
-DEFAULT_PROFILE: Dict[str, str] = {
+DEFAULT_PROFILE: Dict[str, Any] = {
   "username": "PlayerOne",
   "forge_name": "Aether Forge",
   "starting_role": "balanced",
   "starting_island": "Bermuda Abyss",
+  "player_level": 1,
 }
 
-ISLAND_PORTALS = {
-  "bermuda abyss": {"id": "bermuda_abyss", "zone": "Bermuda Abyss"},
-  "atlantis": {"id": "atlantis", "zone": "Atlantean Deep"},
-  "drift fog": {"id": "drift_fog", "zone": "Drift Fog Archipelago"},
-}
-
-ISLAND_MATERIAL_POOLS: Dict[str, Dict[str, int]] = {
+ISLANDS: Dict[str, Dict[str, Any]] = {
   "bermuda_abyss": {
-    "storm_iron_ore": 8,
-    "black_salt": 11,
-    "rift_whisper_algae": 6,
-    "ghostwood_resin": 7,
-    "coral_shards": 10,
+    "zone": "Bermuda Abyss",
+    "travel_cost": 0,
+    "lore": "Storm-stitched reefs with unstable ore veins and deep, salted fog.",
+    "material_pool": {
+      "storm_iron_ore": 8,
+      "black_salt": 11,
+      "rift_whisper_algae": 6,
+      "ghostwood_resin": 7,
+      "coral_shards": 10,
+    },
+    "cosmetic_pool": {
+      "moon_shroud_mask": 3,
+      "salt_lantern_charm": 4,
+      "hull_stitched_cloak": 2,
+    },
   },
-  "atlantis": {
-    "sunken_brass": 12,
-    "moonstone_glass": 7,
-    "tideglass_powder": 8,
-    "aetheric_algae": 5,
-    "ancient_gel": 6,
+  "atlantian_deep": {
+    "zone": "Atlantean Deep",
+    "travel_cost": 2,
+    "lore": "Sunken architecture rings with static light and forgotten moontech.",
+    "material_pool": {
+      "sunken_brass": 12,
+      "moonstone_glass": 7,
+      "tideglass_powder": 8,
+      "aetheric_algae": 5,
+      "ancient_gel": 6,
+      "triton_signal_brace": 3,
+    },
+    "cosmetic_pool": {
+      "coral_tiara": 2,
+      "voidglass_visor": 2,
+      "sea_crown_chain": 1,
+    },
   },
-  "drift_fog": {
-    "storm_iron_ore": 4,
-    "reef_amber": 9,
-    "salt_whip_vines": 11,
-    "sea_bone": 7,
-    "deep_current_moss": 6,
+  "oakvault_cay": {
+    "zone": "Oakvault Cay",
+    "travel_cost": 3,
+    "lore": "A mangrove of hollow boughs and wind-trapped resin tides.",
+    "material_pool": {
+      "vine_iron_leaf": 9,
+      "oak_coral": 7,
+      "resonant_pitch": 6,
+      "brinefruit": 5,
+      "salt_crystal": 8,
+    },
+    "cosmetic_pool": {
+      "oak_shell_amulet": 2,
+      "coconut_lantern_hilt": 3,
+      "reef_root_band": 2,
+    },
+  },
+  "poveglia_mire": {
+    "zone": "Poveglia Mire",
+    "travel_cost": 4,
+    "lore": "Fog-choked marshes where old curses leave echoing bloom trails.",
+    "material_pool": {
+      "mire_glass_shards": 8,
+      "bog_amber": 7,
+      "pale_fiber": 6,
+      "moss_iron": 9,
+      "echo_root": 4,
+    },
+    "cosmetic_pool": {
+      "mire_veil": 2,
+      "shiver_ring": 2,
+      "salted_eye_patch": 3,
+    },
+  },
+  "hashima_iron_reef": {
+    "zone": "Hashima Iron Reef",
+    "travel_cost": 5,
+    "lore": "A steel-choked reef with wrecked anchors and hard-forged veins.",
+    "material_pool": {
+      "iron_bone_scale": 10,
+      "deep_anchor_flux": 5,
+      "rustsilver_flakes": 7,
+      "kelpsteel_thread": 8,
+      "black_tide_ash": 6,
+    },
+    "cosmetic_pool": {
+      "iron_witch_brooch": 2,
+      "deep_hull_binder": 2,
+      "reef_silk_mask": 1,
+    },
   },
 }
 
-COSMETIC_BOUNTIES: Dict[str, Dict[str, int]] = {
-  "bermuda_abyss": {
-    "moon_shroud_mask": 3,
-    "salt-lantern charm": 4,
-    "hull-stitched cloak": 2,
-  },
-  "atlantis": {
-    "coral_tiara": 2,
-    "triton_signal_brace": 3,
-    "voidglass visor": 2,
-  },
-  "drift_fog": {
-    "mistwalker hood": 2,
-    "fog-etched tabard": 3,
-    "currentwalker anklets": 2,
-  },
-}
+ISLAND_ORDER = [
+  "bermuda_abyss",
+  "atlantian_deep",
+  "oakvault_cay",
+  "poveglia_mire",
+  "hashima_iron_reef",
+]
+
+ISLAND_PORTALS: Dict[str, Dict[str, str]] = {}
+ISLAND_MATERIAL_POOLS: Dict[str, Dict[str, int]] = {}
+COSMETIC_BOUNTIES: Dict[str, Dict[str, int]] = {}
+ISLAND_TRAVEL_COSTS: Dict[str, int] = {}
+
+for _island_id, _island_data in ISLANDS.items():
+  zone_key = str(_island_data["zone"]).lower()
+  ISLAND_PORTALS[zone_key] = {"id": _island_id, "zone": _island_data["zone"]}
+  ISLAND_PORTALS[_island_id] = {"id": _island_id, "zone": _island_data["zone"]}
+  ISLAND_MATERIAL_POOLS[_island_id] = _island_data["material_pool"]
+  COSMETIC_BOUNTIES[_island_id] = _island_data["cosmetic_pool"]
+  ISLAND_TRAVEL_COSTS[_island_id] = int(_island_data["travel_cost"])
+
+def _normalize_island_name(island_id: str) -> str:
+  return ISLANDS.get(island_id, ISLANDS["bermuda_abyss"])["zone"]
+
 
 PAGE_HELP: Dict[str, str] = {
   "forge": "forge",
   "inventory": "inventory",
   "talents": "talents",
   "market": "market",
+  "map": "map",
 }
 
 TALENT_TREE: Dict[str, Dict[str, Any]] = TALENT_CATALOG
@@ -211,13 +280,15 @@ def _select_page(raw: str | None) -> str:
     return "inventory"
   if clean in {"skill", "talent", "talents"}:
     return "talents"
+  if clean in {"map", "atlas", "locations", "islands"}:
+    return "map"
   return ""
 
 
 def _normalize_island(raw: str | None) -> Tuple[str, str]:
   if not raw:
-    zone = "bermuda abyss"
-    return ISLAND_PORTALS[zone]["id"], zone.title()
+    zone = "bermuda_abyss"
+    return ISLAND_PORTALS[zone]["id"], _normalize_island_name(zone)
   key = raw.strip().lower()
   match = ISLAND_PORTALS.get(key)
   if match:
@@ -225,24 +296,28 @@ def _normalize_island(raw: str | None) -> Tuple[str, str]:
   for candidate in ISLAND_PORTALS.values():
     if key == candidate["id"] or key == candidate["zone"].lower():
       return candidate["id"], candidate["zone"]
-  return ISLAND_PORTALS["bermuda abyss"]["id"], ISLAND_PORTALS["bermuda abyss"]["zone"]
+  return ISLAND_PORTALS["bermuda_abyss"]["id"], ISLAND_PORTALS["bermuda_abyss"]["zone"]
 
 
 def _choose_island() -> str:
   print("Available island routes:")
-  print("  - Bermuda Abyss")
-  print("  - Atlantean Deep")
-  print("  - Drift Fog Archipelago")
+  for island_id in ISLAND_ORDER:
+    info = ISLANDS[island_id]
+    print(f"  - {info['zone']} (travel cost: {info['travel_cost']} shell{'s' if info['travel_cost'] != 1 else ''})")
   while True:
     raw = input("Choose a starting island (default: Bermuda Abyss): ").strip().lower()
     if not raw:
       return "Bermuda Abyss"
+    if raw.isdigit():
+      index = int(raw)
+      if 1 <= index <= len(ISLAND_ORDER):
+        return ISLANDS[ISLAND_ORDER[index - 1]]["zone"]
     if raw in ISLAND_PORTALS:
       return ISLAND_PORTALS[raw]["zone"]
     for item in ISLAND_PORTALS.values():
       if raw == item["id"] or raw == item["zone"].lower():
         return item["zone"]
-    print("Unknown island. Choose Bermuda Abyss, Atlantean Deep, or Drift Fog Archipelago.")
+    print("Unknown island. Choose Bermuda Abyss, Atlantean Deep, Oakvault Cay, Poveglia Mire, or Hashima Iron Reef.")
 
 
 def _choose_role(profile_roles: List[str]) -> str:
@@ -256,7 +331,7 @@ def _choose_role(profile_roles: List[str]) -> str:
     print(f"Unknown role '{role}'. Try one of: {role_options}")
 
 
-def _create_profile(optimizer: ItemOptimizationEngine) -> Dict[str, str]:
+def _create_profile(optimizer: ItemOptimizationEngine) -> Dict[str, Any]:
   print("")
   print("PROFILE CREATION")
   print("-" * 16)
@@ -281,10 +356,13 @@ def _create_profile(optimizer: ItemOptimizationEngine) -> Dict[str, str]:
   }
 
 
-def _seed_player_state(profile: Dict[str, str]) -> Dict[str, Any]:
+def _seed_player_state(profile: Dict[str, Any]) -> Dict[str, Any]:
+  starting_island_id = _normalize_island(profile["starting_island"])[0]
+  profile_level = int(profile.get("player_level", 1))
   return {
     "sea_shells": 30,
     "talent_points": 2,
+    "player_level": profile_level,
     "talents": {},
     "materials": {
       "storm_iron_ore": 2,
@@ -295,7 +373,8 @@ def _seed_player_state(profile: Dict[str, str]) -> Dict[str, Any]:
       "shell_coil": 1,
     },
     "forage_boons": 0,
-    "current_island": _normalize_island(profile["starting_island"])[0],
+    "current_island": starting_island_id,
+    "travel_log": [starting_island_id],
     "market_listings": {},
     "next_listing_id": 1,
   }
@@ -311,15 +390,17 @@ def _show_tutorial(profile: Dict[str, str]) -> None:
   print("")
   print("Main places to play:")
   print("  Forge         -> Build, refine, slot, and optimize artifacts.")
+  print("  Map          -> Browse routes and travel to active islands.")
   print("  Inventory     -> Collect foraged materials and crafted cosmetics.")
   print("  Talents       -> Manage player growth and foraging/performance boons.")
   print("  Marketplace   -> Trade materials/cosmetics with NPCs and offers.")
   print("")
   print("Basic flow today:")
-  print("  1) use `go forge`, then `seed`, `blueprints`, `forge { ... }`")
-  print("  2) `go inventory`, then `forage`, `materials`, `cosmetics`")
-  print("  3) `go talents`, then `talents` and `learn_talent <id>`")
+  print("  1) `go map`, then `travel <island>` to set your active island.")
+  print("  2) `go inventory`, then `forage attempts=<n>`, `materials`, `cosmetics`")
+  print("  3) `go forge`, then `seed`, `blueprints`, `forge { ... }`")
   print("  4) `go market`, then `market`, `buy`, `sell`")
+  print("  5) `go talents`, then `talents` and `learn_talent <id>`")
   print("")
   print("Type `help` in any page for page-appropriate commands.")
   print("Press Enter to continue.")
@@ -334,6 +415,7 @@ def _print_profile_card(profile: Dict[str, str], player_state: Dict[str, Any]) -
   print(f"  Adventurer    : {profile['username']}")
   print(f"  Forge         : {profile['forge_name']}")
   print(f"  Home Island   : {profile['starting_island']}")
+  print(f"  Active Island : {_normalize_island_name(player_state['current_island'])}")
   print(f"  Role Focus    : {profile['starting_role']}")
   print(f"  Sea Shells    : {player_state['sea_shells']}")
   print(f"  Talents       : {player_state['talent_points']} unspent points")
@@ -362,23 +444,34 @@ def _print_islands() -> None:
   print("")
   print("KNOWN ISLAND ZONES")
   print("------------------")
-  print("1) Bermuda Abyss      — Bermuda-like mysteries and storm metal.")
-  print("2) Atlantean Deep     — sunken relics and moonlit artifacts.")
-  print("3) Drift Fog Archipelago — drifting runes and hidden caches.")
+  for index, island_id in enumerate(ISLAND_ORDER, start=1):
+    island = ISLANDS[island_id]
+    print(f"{index}) {island['zone']}")
+    print(f"   Lore: {island['lore']}")
+    materials = ", ".join(sorted(island["material_pool"].keys()))
+    cosmetics = ", ".join(sorted(island["cosmetic_pool"].keys()))
+    print(
+      "   Materials: "
+      f"{materials} | Travel cost: {island['travel_cost']} shell{'s' if island['travel_cost'] != 1 else ''}"
+    )
+    print(f"   Cosmetics: {cosmetics}")
+    print("")
   print("")
 
 
-def _print_nav(profile: Dict[str, str], current_page: str) -> None:
+def _print_nav(profile: Dict[str, str], player_state: Dict[str, Any], current_page: str) -> None:
   print("")
   print(f"Current page: {current_page.upper()}")
-  print(f"Active island: {profile['starting_island']}")
-  print("Use `go <forge|inventory|talents|market>` to switch.")
+  print(f"Home island  : {profile['starting_island']}")
+  print(f"Active island: {_normalize_island_name(player_state['current_island'])}")
+  print("Use `go <forge|inventory|talents|market|map>` to switch.")
   print("")
 
 
 def _roll_foraging_rewards(player_state: Dict[str, Any], island_id: str, *, attempt_count: int = 1) -> Tuple[Dict[str, int], Dict[str, int], List[str]]:
-  material_pool = ISLAND_MATERIAL_POOLS.get(island_id, ISLAND_MATERIAL_POOLS["bermuda_abyss"])
-  cosmetic_pool = COSMETIC_BOUNTIES.get(island_id, COSMETIC_BOUNTIES["bermuda_abyss"])
+  island_data = ISLANDS.get(island_id, ISLANDS["bermuda_abyss"])
+  material_pool = island_data["material_pool"]
+  cosmetic_pool = island_data["cosmetic_pool"]
 
   forager_level = talent_level(player_state["talents"], "forager_sense")
   calm_bonus = talent_bonus(player_state["talents"], "calm_ritual", "forage_calm_chance")
@@ -412,6 +505,71 @@ def _roll_foraging_rewards(player_state: Dict[str, Any], island_id: str, *, atte
     notes.append("No dramatic finds this run; your haul is stable but quiet.")
 
   return material_gain, cosmetic_gain, notes
+
+
+def _travel_to_island(player_state: Dict[str, Any], destination_raw: str) -> bool:
+  if not destination_raw:
+    print("Usage: travel <island id or island name>")
+    return False
+
+  destination_id, destination_zone = _normalize_island(destination_raw)
+  if destination_id == player_state["current_island"]:
+    print(f"You are already in {destination_zone}.")
+    return True
+
+  fee = ISLAND_TRAVEL_COSTS.get(destination_id, 0)
+  if player_state["sea_shells"] < fee:
+    print(f"Need {fee} Sea Shells to sail to {destination_zone}.")
+    return False
+
+  player_state["sea_shells"] -= fee
+  player_state["current_island"] = destination_id
+  player_state.setdefault("travel_log", [])
+  if destination_id not in player_state["travel_log"]:
+    player_state["travel_log"].append(destination_id)
+
+  if fee == 0:
+    print(f"Arrived at {destination_zone}.")
+  else:
+    print(f"Traveled to {destination_zone} for {fee} Sea Shells.")
+  return True
+
+
+def _handle_map_command(
+  profile: Dict[str, str],
+  player_state: Dict[str, Any],
+  cmd: str,
+  rest: List[str],
+) -> bool:
+  if cmd in {"map", "islands", "atlas", "locations"}:
+    if rest:
+      print("Map commands do not take arguments.")
+      return True
+    _print_islands()
+    print(f"Home island  : {profile['starting_island']}")
+    print(f"Active island: {_normalize_island_name(player_state['current_island'])}")
+    print("")
+    return True
+
+  if cmd == "travel_log":
+    print("")
+    print("TRAVEL LOG")
+    print("----------")
+    for island_id in player_state.get("travel_log", []):
+      print(f"  - {_normalize_island_name(island_id)}")
+    print("")
+    return True
+
+  if cmd == "where":
+    print("")
+    print("LOCATIONS")
+    print("---------")
+    print(f"Home island  : {profile['starting_island']}")
+    print(f"Active island: {_normalize_island_name(player_state['current_island'])}")
+    print("")
+    return True
+
+  return False
 
 
 def _print_market(player_state: Dict[str, Any]) -> None:
@@ -465,7 +623,10 @@ def _print_talents_by_filter(
   print("")
   print("TALENTS")
   print("-------")
+  player_level = int(player_state.get("player_level", 1))
+  used_levels = total_talent_levels(player_state["talents"])
   print(f"Unspent points: {player_state['talent_points']}")
+  print(f"Talent levels used: {used_levels}/{player_level}")
   print("Installed:")
   if not player_state["talents"]:
     print("  (none)")
@@ -575,17 +736,21 @@ def _print_help(page: str) -> None:
     print("  mint <asset_id> [chain]            mint NFT for item")
     print("  port <asset_id> [target]           export portable payload")
     print("  show <asset_id>                    show one item")
-    print("  go <inventory|talents|market>      switch to another main place")
-    print("  islands                            show map overview")
+    print("  go <forge|inventory|talents|market|map>  switch to another main place")
+    print("  map                                show map overview")
     print("  exit / quit                        leave")
   elif page == "inventory":
     print("Inventory page commands:")
     print("  profile                            show current profile")
     print("  materials                          list gathered materials")
     print("  cosmetics                          list gathered cosmetics")
-    print("  forage [island] [attempts=<n>]     gather island materials and chance-based cosmetics")
+    print("  forage [attempts=<n>]              gather materials on active island")
+    print("  map | islands | atlas | locations  review all known zones")
+    print("  travel_log                         show known visited zones")
+    print("  where                              show home and active islands")
     print("  transfer_asset <asset_id>           move forged item to storage (placeholder)")
-    print("  go <forge|talents|market>          switch place")
+    print("  travel <island id or island name>  sail to an island")
+    print("  go <forge|talents|market|map>      switch place")
     print("  title                              show title screen")
     print("  tutorial                           replay onboarding tutorial")
     print("  exit / quit                        leave")
@@ -597,18 +762,34 @@ def _print_help(page: str) -> None:
     print("  talent_categories                  list talent categories and type breakdown")
     print("  talent_search <term>               search talent ids/names/descriptions")
     print("  learn_talent <talent_id>           spend points")
-    print("  go <forge|inventory|market>        switch place")
+    print("  go <forge|inventory|market|map>        switch place")
+    print("  map                               show map overview")
     print("  title                              show title screen")
     print("  tutorial                           replay onboarding tutorial")
     print("  exit / quit                        leave")
-  else:
+  elif page == "market":
     print("Marketplace commands:")
     print("  profile                            show current profile")
     print("  market                             show active marketplace board")
     print("  buy <listing_id>                   buy seeded/private listing")
     print("  sell <category> <item> <qty> <price>   place item to your listing")
     print("  reclaim <listing_id>                reclaim your listing")
-    print("  go <forge|inventory|talents>       switch place")
+    print("  go <forge|inventory|talents|map>       switch place")
+    print("  map                               show map overview")
+    print("  travel <island id or island name>  sail to an island")
+    print("  travel_log                         show known visited zones")
+    print("  where                              show home and active islands")
+    print("  title                              show title screen")
+    print("  tutorial                           replay onboarding tutorial")
+    print("  exit / quit                        leave")
+  else:
+    print("Map commands:")
+    print("  profile                            show current profile")
+    print("  map | islands | atlas | locations  review all known zones")
+    print("  travel <island id or island name>  sail to an island")
+    print("  travel_log                         show known visited zones")
+    print("  where                              show home and active islands")
+    print("  go <forge|inventory|talents|market|map> switch place")
     print("  title                              show title screen")
     print("  tutorial                           replay onboarding tutorial")
     print("  exit / quit                        leave")
@@ -918,7 +1099,6 @@ def _handle_inventory_command(
     return True
 
   if cmd == "forage":
-    island_raw = None
     attempts = 1
     if rest:
       tokens = rest[0].split()
@@ -927,13 +1107,20 @@ def _handle_inventory_command(
           if "=" in token:
             key, value = token.split("=", 1)
             if key.lower() == "attempts":
-              attempts = max(1, int(value))
+              try:
+                attempts = max(1, int(value))
+              except ValueError:
+                print("attempts must be an integer.")
+                return True
             else:
               print(f"Unsupported option '{token}'.")
               return True
           else:
-            island_raw = token
-    island_id, resolved_name = _normalize_island(island_raw or player_state["current_island"])
+            print("Foraging is tied to your active island.")
+            print("Use `travel <island>` first, then run `forage`.")
+            return True
+    island_id = player_state["current_island"]
+    resolved_name = _normalize_island_name(island_id)
     player_state["current_island"] = island_id
     material_gain, cosmetic_gain, notes = _roll_foraging_rewards(player_state, island_id, attempt_count=attempts)
     if not material_gain and not cosmetic_gain:
@@ -1010,6 +1197,14 @@ def _handle_talent_command(
       if talent_level(player_state["talents"], prerequisite) <= 0:
         print(f"{talent['name']} requires '{prerequisite}' to be learned first.")
         return True
+    profile_level = int(profile.get("player_level", 1))
+    talent_levels_allocated = total_talent_levels(player_state["talents"])
+    if talent_levels_allocated + 1 > profile_level:
+      print(
+        f"Profile level {profile_level} reached: you can only invest "
+        f"{profile_level} talent levels in total right now."
+      )
+      return True
     cost = talent["cost"]
     if player_state["talent_points"] < cost:
       print(f"Need {cost} talent points for {talent['name']}.")
@@ -1160,7 +1355,7 @@ def _handle_market_command(player_state: Dict[str, Any], cmd: str, rest: List[st
 
 def _run_game_loop(game: GameLogic, optimizer: ItemOptimizationEngine, profile: Dict[str, str], player_state: Dict[str, Any]) -> None:
   current_page = "forge"
-  _print_nav(profile, current_page)
+  _print_nav(profile, player_state, current_page)
   print("Type `help` for page commands.")
 
   while True:
@@ -1180,6 +1375,15 @@ def _run_game_loop(game: GameLogic, optimizer: ItemOptimizationEngine, profile: 
       break
 
     try:
+      if cmd in {"map", "islands", "atlas", "locations", "travel_log", "where"}:
+        if _handle_map_command(profile, player_state, cmd, rest):
+          continue
+
+      if cmd == "travel":
+        destination = rest[0].strip() if rest else ""
+        _travel_to_island(player_state, destination)
+        continue
+
       if cmd == "help":
         _print_help(current_page)
         continue
@@ -1196,20 +1400,16 @@ def _run_game_loop(game: GameLogic, optimizer: ItemOptimizationEngine, profile: 
         _show_tutorial(profile)
         continue
 
-      if cmd == "islands":
-        _print_islands()
-        continue
-
       if cmd == "go":
         if not rest:
-          print("Usage: go <forge|inventory|talents|market>")
+          print("Usage: go <forge|inventory|talents|market|map>")
           continue
         next_page = _select_page(rest[0])
         if not next_page:
-          print("Unknown page. Choose forge, inventory, talents, or market.")
+          print("Unknown page. Choose forge, inventory, talents, market, or map.")
           continue
         current_page = next_page
-        _print_nav(profile, current_page)
+        _print_nav(profile, player_state, current_page)
         if current_page == "forge":
           print("Main page: Forge")
         continue
@@ -1226,8 +1426,8 @@ def _run_game_loop(game: GameLogic, optimizer: ItemOptimizationEngine, profile: 
       if current_page == "market" and _handle_market_command(player_state, cmd, rest):
         continue
 
-      if cmd == "go":
-        pass
+      if current_page == "map" and _handle_map_command(profile, player_state, cmd, rest):
+        continue
 
       print("Unknown command. Type 'help'.")
     except ValueError as exc:
@@ -1244,9 +1444,10 @@ def main() -> None:
   profile = _create_profile(optimizer)
   player_state = _seed_player_state(profile)
   _show_tutorial(profile)
-  _print_nav(profile, "forge")
+  _print_nav(profile, player_state, "forge")
   _run_game_loop(game, optimizer, profile, player_state)
 
 
 if __name__ == "__main__":
   main()
+

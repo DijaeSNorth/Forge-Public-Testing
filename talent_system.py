@@ -147,6 +147,8 @@ def _node(
   talent_category: str = "effects",
   prerequisites: Sequence[str] | None = None,
   tags: Sequence[str] | None = None,
+  level_weight_interval: int | None = None,
+  level_weight_multiplier: float = 1.0,
 ) -> Dict[str, Any]:
   return {
     "id": _normalize_talent_id(talent_id),
@@ -160,6 +162,8 @@ def _node(
     "is_placeholder": bool(is_placeholder),
     "prerequisites": [str(item).strip().lower() for item in (prerequisites or ()) if str(item).strip()],
     "tags": [str(tag).strip() for tag in (tags or ()) if str(tag).strip()],
+    "level_weight_interval": int(level_weight_interval) if level_weight_interval else None,
+    "level_weight_multiplier": float(level_weight_multiplier),
   }
 
 
@@ -175,6 +179,8 @@ def _item_talent(
   cost: int = 1,
   talent_category: str = "effects",
   prerequisites: Sequence[str] | None = None,
+  level_weight_interval: int | None = None,
+  level_weight_multiplier: float = 1.0,
 ) -> Dict[str, Any]:
   label = item_name.replace("_", " ").title()
   talent_id = f"{talent_type}_{item_name}_{index:02d}"
@@ -196,23 +202,36 @@ def _item_talent(
     effects={effect_key: float(bonus_value)},
     tags=[talent_type, "item_based", f"item:{item_name}", "affinity"],
     prerequisites=prerequisites,
+    level_weight_interval=level_weight_interval,
+    level_weight_multiplier=level_weight_multiplier,
   )
 
 
-def _item_placeholder_node(talent_type: str, item_name: str, node_index: int) -> Dict[str, Any]:
+def _item_placeholder_node(
+  talent_type: str,
+  item_name: str,
+  node_index: int,
+  *,
+  max_level: int = 1,
+  level_weight_interval: int = 5,
+  level_weight_multiplier: float = 2.0,
+) -> Dict[str, Any]:
   base = TALENT_TYPE_LABELS.get(talent_type, talent_type.replace("_", " ").title())
   talent_id = f"{talent_type}_placeholder_{node_index:03d}"
   return _node(
     talent_id=talent_id,
     name=f"{base} Item Slot {node_index}",
     description=(
-      f"Placeholder item-based '{base}' node using lineage '{item_name}'. "
+    f"Placeholder item-based '{base}' node using lineage '{item_name}'. "
       "Implement concrete logic in the next pass."
     ),
     talent_type=talent_type,
     talent_category=TALENT_PATH_CATEGORY.get(talent_type, "effects"),
     is_placeholder=True,
     cost=1,
+    max_level=max_level,
+    level_weight_interval=level_weight_interval,
+    level_weight_multiplier=level_weight_multiplier,
     effects={},
     tags=[talent_type, "item_based", "placeholder", f"item:{_normalize_talent_id(item_name)}"],
   )
@@ -276,28 +295,16 @@ def _core_nodes() -> List[Dict[str, Any]]:
   ]
 
   elemental_nodes = [
-    ("water", "elemental_affinity", 1.0, "Water tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("wind", "elemental_affinity", 1.0, "Wind tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("fire", "elemental_affinity", 1.0, "Fire tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("earth", "elemental_affinity", 1.0, "Earth tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("lightning", "elemental_affinity", 1.0, "Lightning tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("ice", "elemental_affinity", 1.0, "Ice tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("poison", "elemental_affinity", 1.0, "Poison tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("arcane", "elemental_affinity", 1.0, "Arcane tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("void", "elemental_affinity", 1.0, "Void tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("holy", "elemental_affinity", 1.0, "Holy tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("steam", "elemental_damage_bonus", 0.08, "Steam-tagged items gain +8% elemental damage.", 1, 1),
-    ("magma", "forge_output_bonus", 0.06, "Magma-tagged items increase core forge result value by 6%.", 2, 2),
-    ("gale", "forging_speed_bonus", 0.05, "Gale items improve forging speed by 5%.", 1, 1),
-    ("tempest", "slot_stability_bonus", 0.07, "Tempest items add +0.07 stability to volatile slot outcomes.", 2, 2),
-    ("frost_salt", "critical_chance_bonus", 0.03, "Frost Salt nodes increase elemental critical chance by 3%.", 1, 1),
-    ("ember", "elemental_affinity", 1.0, "Ember tags gain +1 affinity on forged item rolls.", 1, 1),
-    ("haze", "elemental_resistance_bonus", 0.04, "Haze items improve elemental resistance gains in final calibration.", 1, 1),
-    ("brine", "forage_element_bonus", 0.05, "Brine synergy increases foraging success odds for water-themed craft attempts.", 2, 1),
-    ("crystal_core", "durability_bonus", 0.06, "Crystal-anchored elements raise final item durability by 6%.", 1, 1),
-    ("ashfall", "burn_bonus", 0.04, "Ashfall-laced components raise burn-style roll quality by 4%.", 1, 1),
-    ("aether", "magic_flux_bonus", 0.07, "Aether components raise high-variance magic-flux rolls by 7%.", 1, 2),
-    ("rime", "forge_cost_reduction", 0.05, "Rime-aligned lineage lowers expensive forge reroll penalties by 5%.", 1, 2),
+    ("water", "elemental_affinity", 1.0, "Applies to forged items with water resonance.", 10, 1),
+    ("wind", "elemental_affinity", 1.0, "Applies to forged items with wind resonance.", 10, 1),
+    ("fire", "elemental_affinity", 1.0, "Applies to forged items with fire resonance.", 10, 1),
+    ("earth", "elemental_affinity", 1.0, "Applies to forged items with earth resonance.", 10, 1),
+    ("lightning", "elemental_affinity", 1.0, "Applies to forged items with lightning resonance.", 10, 1),
+    ("ice", "elemental_affinity", 1.0, "Applies to forged items with ice resonance.", 10, 1),
+    ("poison", "elemental_affinity", 1.0, "Applies to forged items with poison resonance.", 10, 1),
+    ("arcane", "elemental_affinity", 1.0, "Applies to forged items with arcane resonance.", 10, 1),
+    ("void", "elemental_affinity", 1.0, "Applies to forged items with void resonance.", 10, 1),
+    ("holy", "elemental_affinity", 1.0, "Applies to forged items with holy resonance.", 10, 1),
   ]
   for index, item_config in enumerate(elemental_nodes, start=1):
     item_name = item_config[0]
@@ -306,6 +313,7 @@ def _core_nodes() -> List[Dict[str, Any]]:
     suffix = item_config[3]
     max_level = item_config[4]
     cost = item_config[5]
+    multiplier = 3.0 if index <= 5 else 2.25
     nodes.append(
       _item_talent(
         "elemental",
@@ -317,6 +325,8 @@ def _core_nodes() -> List[Dict[str, Any]]:
         max_level=max_level,
         cost=cost,
         talent_category=TALENT_PATH_CATEGORY.get("elemental", "effects"),
+        level_weight_interval=5,
+        level_weight_multiplier=multiplier,
       )
     )
   return nodes
@@ -329,20 +339,35 @@ def _build_talent_tree() -> OrderedDict[str, Dict[str, Any]]:
       raise ValueError(f"Duplicate talent id: {talent['id']}")
     tree[talent["id"]] = talent
 
+  template_upgrade_levels = 10
   for talent_type in TALENT_TYPE_LABELS:
-    current_count = len([node for node in tree.values() if node["talent_type"] == talent_type])
-    if current_count > NODES_PER_TYPE:
+    budget_used = sum(
+      int(node.get("max_level", 1))
+      for node in tree.values()
+      if node["talent_type"] == talent_type
+    )
+    if budget_used > NODES_PER_TYPE:
       raise ValueError(
-        f"Talent type '{talent_type}' has {current_count} custom nodes, "
+        f"Talent type '{talent_type}' has {budget_used} talent levels, "
         f"but NODES_PER_TYPE is {NODES_PER_TYPE}."
       )
-    for index in range(1, NODES_PER_TYPE - current_count + 1):
-      item_name = f"{talent_type}_item_lineage_{index:03d}"
-      talent = _item_placeholder_node(talent_type, item_name, index=index)
+    placeholder_index = 1
+    while budget_used < NODES_PER_TYPE:
+      remaining = NODES_PER_TYPE - budget_used
+      placeholder_level = template_upgrade_levels if remaining >= template_upgrade_levels else remaining
+      item_name = f"{talent_type}_template_upgrade_{placeholder_index:02d}"
+      talent = _item_placeholder_node(
+        talent_type,
+        item_name,
+        index=placeholder_index,
+        max_level=placeholder_level,
+      )
       node_id = talent["id"]
       if node_id in tree:
         raise ValueError(f"Duplicate generated placeholder id: {node_id}")
       tree[node_id] = talent
+      budget_used += placeholder_level
+      placeholder_index += 1
 
   # sort by path first so CLI display remains grouped and deterministic
   ordered: OrderedDict[str, Dict[str, Any]] = OrderedDict()
@@ -352,6 +377,21 @@ def _build_talent_tree() -> OrderedDict[str, Dict[str, Any]]:
         ordered[node["id"]] = node
   return ordered
 
+
+def _weighted_talent_bonus(level: int, base_value: float, node: Dict[str, Any]) -> float:
+  interval = int(node.get("level_weight_interval") or 0)
+  if interval <= 0:
+    return level * base_value
+  multiplier = float(node.get("level_weight_multiplier") or 1.0)
+  if multiplier == 1.0:
+    return level * base_value
+  total = 0.0
+  for current_level in range(1, level + 1):
+    if current_level % interval == 0:
+      total += base_value * multiplier
+    else:
+      total += base_value
+  return total
 
 if NODES_PER_TYPE > MAX_NODES_PER_TYPE:
   raise ValueError(f"NODES_PER_TYPE ({NODES_PER_TYPE}) cannot exceed MAX_NODES_PER_TYPE ({MAX_NODES_PER_TYPE}).")
@@ -378,6 +418,26 @@ def talent_level(player_talents: Mapping[str, int], talent_id: str) -> int:
   return int(player_talents.get(_normalize_talent_id(talent_id), 0) or 0)
 
 
+def total_talent_levels(player_talents: Mapping[str, int]) -> int:
+  """Return the total level investment across all known talent nodes."""
+  if not isinstance(player_talents, Mapping):
+    return 0
+  total = 0
+  for raw_talent_id, raw_level in player_talents.items():
+    if not isinstance(raw_talent_id, str):
+      continue
+    node = talent_node(raw_talent_id)
+    if node is None:
+      continue
+    max_level = int(node.get("max_level", 0))
+    level = raw_level if isinstance(raw_level, int) else 0
+    if max_level > 0:
+      total += max(0, min(level, max_level))
+    else:
+      total += max(0, level)
+  return total
+
+
 def talent_bonus(player_talents: Mapping[str, int], talent_id: str, effect_key: str, default: float = 0.0) -> float:
   node = talent_node(talent_id)
   if node is None:
@@ -385,7 +445,11 @@ def talent_bonus(player_talents: Mapping[str, int], talent_id: str, effect_key: 
   raw_value = node.get("effects", {}).get(effect_key)
   if not isinstance(raw_value, (int, float)):
     return default
-  return talent_level(player_talents, talent_id) * float(raw_value)
+  return _weighted_talent_bonus(
+    talent_level(player_talents, talent_id),
+    float(raw_value),
+    node,
+  )
 
 
 def talent_nodes_for_type(talent_type: str) -> List[Dict[str, Any]]:
@@ -398,3 +462,8 @@ def talent_nodes_for_category(talent_category: str) -> List[Dict[str, Any]]:
 
 def talent_types() -> Iterable[str]:
   return TALENT_TYPE_LABELS.keys()
+
+
+
+
+
