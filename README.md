@@ -33,6 +33,39 @@ This project is now centered on **real-world inspired crafting workflows** with 
   - terminal interface for building/editing and forging assets
   - new slot commands: `slot_lock`, `slot_unlock`, `slot_reroll`, `slot_upgrade`
 
+## Git branch strategy for test development
+
+Primary flow:
+
+- `main` is the deployed test baseline (GitHub Pages reads this branch).
+- Feature work is done in:
+  - `feature/materials-supplies`
+  - `feature/gameplay`
+  - `feature/talent-system`
+  - `feature/item-stats`
+  - `feature/balancing`
+- PRs should target `main`.
+
+Recommended branch naming:
+
+- `feature/<category>/<brief-description>`
+- Allowed with the policy workflow:
+  - `feature/materials-supplies`
+  - `feature/gameplay`
+  - `feature/talent-system`
+  - `feature/item-stats`
+  - `feature/balancing`
+
+Suggested local workflow:
+
+- `git checkout main`
+- `git pull`
+- `git checkout -b feature/<category>/<task-name>`
+- make changes
+- `git add . && git commit -m "feat: <description>"`
+- `git push -u origin feature/<category>/<task-name>`
+- Open PR to `main`.
+
 ## Run
 
 ```bash
