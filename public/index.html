@@ -54,6 +54,34 @@
         font-size: 0.9rem;
       }
 
+      .place-row {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        border-bottom: 1px solid var(--border);
+        background: rgba(2, 6, 23, 0.42);
+      }
+
+      button.place {
+        appearance: none;
+        border: 0;
+        border-right: 1px solid var(--border);
+        background: transparent;
+        color: #cbd5e1;
+        font: inherit;
+        padding: 0.65rem 0.5rem;
+      }
+
+      button.place:last-child {
+        border-right: 0;
+      }
+
+      button.place:hover,
+      button.place.active {
+        background: rgba(34, 197, 94, 0.12);
+        color: var(--text);
+        cursor: pointer;
+      }
+
       .terminal {
         height: 68vh;
         min-height: 420px;
@@ -90,6 +118,10 @@
         font-weight: 700;
       }
 
+      .input-stack {
+        min-width: 0;
+      }
+
       #commandInput {
         appearance: none;
         border: 0;
@@ -99,6 +131,13 @@
         background: transparent;
         color: var(--text);
         font: inherit;
+      }
+
+      .autocomplete-hint {
+        min-height: 1.15rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+        padding: 0 0.4rem 0.2rem;
       }
 
       .pill-row {
@@ -135,6 +174,10 @@
           padding: 0.5rem;
         }
 
+        .place-row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
         .terminal {
           min-height: 62vh;
           height: 78vh;
@@ -147,23 +190,35 @@
       <section class="card">
         <div class="header">
           <strong>Forge Public Testing Terminal</strong>
-          <span class="muted">Branch: <code>main</code> · Deploy: <code>/public</code></span>
+          <span class="muted">Branch: <code>main</code> / Deploy: <code>/public</code></span>
+        </div>
+        <div class="place-row" aria-label="Main places">
+          <button class="place active" type="button" data-place="forge" data-command="go forge">Forge</button>
+          <button class="place" type="button" data-place="map" data-command="go map">Map</button>
+          <button class="place" type="button" data-place="inventory" data-command="go inventory">Inventory</button>
+          <button class="place" type="button" data-place="talents" data-command="go talents">Talents</button>
+          <button class="place" type="button" data-place="market" data-command="go market">Market</button>
         </div>
         <div class="terminal">
           <pre id="output" aria-live="polite"></pre>
           <form id="commandForm" class="prompt-row" autocomplete="off">
-            <span class="prompt">forge&gt;</span>
-            <input
-              id="commandInput"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              placeholder="Type a command, e.g. help"
-            />
+            <span id="promptLabel" class="prompt">forge&gt;</span>
+            <div class="input-stack">
+              <input
+                id="commandInput"
+                list="commandSuggestions"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                placeholder="Type a command, e.g. help"
+              />
+              <datalist id="commandSuggestions"></datalist>
+              <div id="autocompleteHint" class="autocomplete-hint">Tab completes commands. Try: go forge</div>
+            </div>
           </form>
         </div>
-        <div class="pill-row">
+        <div id="quickCommands" class="pill-row">
           <button class="pill" type="button" data-command="help">help</button>
           <button class="pill" type="button" data-command="map">map</button>
           <button class="pill" type="button" data-command="forage">forage</button>
@@ -178,7 +233,7 @@
         <p style="margin:.3rem 0">This is the GitHub Pages test app. It mirrors terminal-style play flow in-browser:</p>
         <ul style="margin:.4rem 0 .1rem 1.1rem;line-height:1.6">
           <li>Type game commands with <code>forge&gt;</code> prompt.</li>
-          <li>Use arrow keys for history and click quick commands above.</li>
+          <li>Use arrow keys for history, Tab for autocomplete, and place buttons for navigation.</li>
           <li>Current branch target: <code>main</code>.</li>
         </ul>
         <p style="margin:.6rem 0 0"><a href="https://github.com/DijaeSNorth/Forge-Public-Testing" target="_blank" rel="noreferrer">Open repository</a></p>
@@ -189,11 +244,17 @@
       const output = document.getElementById('output');
       const form = document.getElementById('commandForm');
       const input = document.getElementById('commandInput');
-      const pillButtons = Array.from(document.querySelectorAll('[data-command]'));
+      const promptLabel = document.getElementById('promptLabel');
+      const hint = document.getElementById('autocompleteHint');
+      const suggestionList = document.getElementById('commandSuggestions');
+      const quickCommands = document.getElementById('quickCommands');
+      const placeButtons = Array.from(document.querySelectorAll('button.place'));
 
       const state = {
+        page: 'forge',
         location: 'Bermuda Abyss',
         day: 1,
+        shells: 30,
         materials: {
           "Aether Iron": 2,
           "Moonstone Dust": 1,
@@ -207,6 +268,34 @@
         role: 'Controller',
         forgeName: 'Default Forge',
         player: 'Guest Smith',
+      };
+
+      const places = {
+        forge: {
+          title: 'Forge',
+          quick: ['blueprints', 'forge steel_broad_sword', 'optimize', 'inventory', 'go inventory'],
+          next: 'Use `blueprints`, then `forge steel_broad_sword`, then `optimize`.'
+        },
+        map: {
+          title: 'Map',
+          quick: ['map', 'travel 2', 'travel Bermuda Abyss', 'go inventory', 'status'],
+          next: 'Use `map`, then `travel 2` or `travel Atlantean Deep`.'
+        },
+        inventory: {
+          title: 'Inventory',
+          quick: ['inventory', 'forage', 'forage 3', 'go forge', 'go market'],
+          next: 'Use `forage` to gather, then `go forge` to craft or `go market` to trade.'
+        },
+        talents: {
+          title: 'Talents',
+          quick: ['talents', 'roles', 'status', 'go forge', 'go inventory'],
+          next: 'Use `talents` to review growth tags, then return with `go forge`.'
+        },
+        market: {
+          title: 'Market',
+          quick: ['market', 'inventory', 'go inventory', 'go forge', 'status'],
+          next: 'Use `market` to view offers. Trading hooks are light placeholders for now.'
+        }
       };
 
       const locations = [
@@ -226,16 +315,149 @@
 
       const history = [];
       let historyIndex = -1;
+      let completionMatches = [];
+      let completionIndex = -1;
 
       function line(text = '') {
         output.textContent += `${text}\n`;
         output.scrollTop = output.scrollHeight;
       }
 
+      function nextStep(text) {
+        line(`Next: ${text}`);
+        line('');
+      }
+
+      function allBlueprintKeys() {
+        return Object.values(blueprints).flat();
+      }
+
+      function commandCatalog() {
+        const base = [
+          'help',
+          'clear',
+          'seed',
+          'status',
+          'nav',
+          'places',
+          'map',
+          'market',
+          'go forge',
+          'go map',
+          'go inventory',
+          'go talents',
+          'go market',
+          'travel 1',
+          'travel 2',
+          'travel 3',
+          'travel 4',
+          'travel 5',
+          'forage',
+          'forage 3',
+          'inventory',
+          'blueprints',
+          'talents',
+          'roles',
+          'optimize',
+          'benchmark',
+        ];
+        const travelCommands = locations.map((loc) => `travel ${loc}`);
+        const forgeCommands = allBlueprintKeys().map((key) => `forge ${key}`);
+        return [...base, ...travelCommands, ...forgeCommands].sort();
+      }
+
+      function updateAutocompleteList() {
+        suggestionList.innerHTML = '';
+        commandCatalog().forEach((command) => {
+          const option = document.createElement('option');
+          option.value = command;
+          suggestionList.appendChild(option);
+        });
+      }
+
+      function updateHint() {
+        const raw = input.value.trim().toLowerCase();
+        if (!raw) {
+          hint.textContent = `Tab completes commands. Next: ${places[state.page].next}`;
+          return;
+        }
+        const matches = commandCatalog().filter((command) => command.toLowerCase().startsWith(raw));
+        if (!matches.length) {
+          hint.textContent = 'No completion found. Type `help` or `nav`.';
+          return;
+        }
+        hint.textContent = matches.length === 1
+          ? `Tab: ${matches[0]}`
+          : `Tab cycles ${matches.length} matches: ${matches.slice(0, 4).join(' | ')}`;
+      }
+
+      function completeInput() {
+        const raw = input.value.trim().toLowerCase();
+        if (!raw) {
+          input.value = places[state.page].quick[0];
+          updateHint();
+          return;
+        }
+        const matches = commandCatalog().filter((command) => command.toLowerCase().startsWith(raw));
+        if (!matches.length) {
+          updateHint();
+          return;
+        }
+        if (matches.join('\n') !== completionMatches.join('\n')) {
+          completionMatches = matches;
+          completionIndex = 0;
+        } else {
+          completionIndex = (completionIndex + 1) % completionMatches.length;
+        }
+        input.value = completionMatches[completionIndex];
+        updateHint();
+      }
+
+      function bindCommandButtons() {
+        Array.from(document.querySelectorAll('[data-command]')).forEach((button) => {
+          button.onclick = () => {
+            const command = button.dataset.command;
+            input.value = command;
+            input.focus();
+            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+          };
+        });
+      }
+
+      function setPage(nextPage, silent = false) {
+        if (!places[nextPage]) {
+          line(`Unknown place: ${nextPage}`);
+          nextStep('Use `nav` to see places, or `go forge`, `go inventory`, `go talents`, `go market`.');
+          return;
+        }
+        state.page = nextPage;
+        promptLabel.textContent = `${nextPage}>`;
+        placeButtons.forEach((button) => {
+          button.classList.toggle('active', button.dataset.place === nextPage);
+        });
+        quickCommands.innerHTML = '';
+        places[nextPage].quick.forEach((command) => {
+          const button = document.createElement('button');
+          button.className = 'pill';
+          button.type = 'button';
+          button.dataset.command = command;
+          button.textContent = command;
+          quickCommands.appendChild(button);
+        });
+        bindCommandButtons();
+        updateHint();
+        if (!silent) {
+          line(`Moved to ${places[nextPage].title}.`);
+          nextStep(places[nextPage].next);
+        }
+      }
+
       function banner() {
         line('Welcome to Forge Terminal Test.');
-        line('Type `help` to list available commands.');
+        line('Main places: Forge / Map / Inventory / Talents / Market.');
+        line('Type `nav` to move quickly. Press Tab for autocomplete.');
         line('');
+        nextStep('Start with `go forge`, `blueprints`, or click a place button above.');
       }
 
       function commandHelp() {
@@ -244,22 +466,30 @@
         line('  clear                    clear terminal output');
         line('  seed                     load starter inventory and stats');
         line('  status                   show player/location snapshot');
+        line('  nav                      show main places and navigation tips');
+        line('  go <place>               jump to forge, map, inventory, talents, or market');
         line('  map                      show island locations');
         line('  travel <location>        move to an island (name or index 1-5)');
         line('  forage                   add random materials from current location');
+        line('  forage <attempts>        gather multiple times from current location');
         line('  inventory                list materials/cosmetics/inventory');
+        line('  market                   show marketplace placeholder offers');
         line('  blueprints               list sample forge blueprints');
         line('  forge <blueprint>        craft a sample artifact');
         line('  talents                  list active talent tags');
         line('  roles                    list valid optimization roles');
         line('  optimize                 show role score summary for current gear');
         line('  benchmark                show sample leaderboard snapshot');
+        line('  Tab                      autocomplete the current command');
         line('');
+        nextStep(places[state.page].next);
       }
 
       function resetSeed() {
+        state.page = 'forge';
         state.location = 'Bermuda Abyss';
         state.day = 1;
+        state.shells = 30;
         state.materials = {
           "Aether Iron": 2,
           "Moonstone Dust": 1,
@@ -270,26 +500,48 @@
         };
         state.forges = [];
         state.talents.clear();
+        setPage('forge', true);
         line('Seed applied. Baseline profile loaded.');
+        nextStep('Use `blueprints` to choose a forge plan, or `go inventory` and `forage` for more materials.');
       }
 
       function showStatus() {
         line(`Player: ${state.player}`);
         line(`Forge: ${state.forgeName}`);
         line(`Role: ${state.role}`);
+        line(`Place: ${places[state.page].title}`);
         line(`Day: ${state.day}`);
         line(`Location: ${state.location}`);
+        line(`Shells: ${state.shells}`);
+        nextStep(places[state.page].next);
+      }
+
+      function showNav() {
+        line('Main places:');
+        Object.entries(places).forEach(([key, place]) => {
+          const marker = key === state.page ? '*' : ' ';
+          line(` ${marker} ${key.padEnd(10)} ${place.next}`);
+        });
+        line('');
+        line('Examples:');
+        line('  go forge');
+        line('  go inventory');
+        line('  go market');
+        nextStep('Click a place button above, or type `go forge` / `go inventory`.');
       }
 
       function listMap() {
+        setPage('map', true);
         line('Known locations:');
         locations.forEach((loc, index) => {
           const marker = loc === state.location ? ' *' : '  ';
           line(` ${index + 1}. ${marker} ${loc}`);
         });
+        nextStep('Use `travel 2` for Atlantean Deep, then `go inventory` and `forage`.');
       }
 
       function showInventory() {
+        setPage('inventory', true);
         line('Materials:');
         const materials = Object.entries(state.materials);
         if (!materials.length) {
@@ -309,13 +561,16 @@
 
         line('');
         line(`Forged assets this session: ${state.forges.length}`);
+        nextStep('Use `forage` to collect more, `go forge` to craft, or `go market` to trade.');
       }
 
       function randomFrom(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
       }
 
-      function forage() {
+      function forage(args = []) {
+        setPage('inventory', true);
+        const attempts = Math.max(1, Math.min(5, Number(args[0]) || 1));
         const gain = {
           'Bermuda Abyss': ['Aether Iron', 'Salt Pearl'],
           'Atlantean Deep': ['Ghost Reed', 'Siren Thread'],
@@ -324,17 +579,22 @@
           'Hashima Iron Reef': ['Iron Scale', 'Aether Iron'],
         }[state.location] || ['Mystery Shards'];
 
-        const picked = gain[randomFrom(0, gain.length - 1)];
-        const amt = randomFrom(1, 3);
-        state.materials[picked] = (state.materials[picked] || 0) + amt;
-        state.day += 1;
         line(`Forage completed at ${state.location}.`);
-        line(` +${amt} ${picked}`);
+        for (let run = 0; run < attempts; run += 1) {
+          const picked = gain[randomFrom(0, gain.length - 1)];
+          const amt = randomFrom(1, 3);
+          state.materials[picked] = (state.materials[picked] || 0) + amt;
+          state.day += 1;
+          line(` +${amt} ${picked}`);
+        }
+        nextStep('Use `inventory` to review your haul, then `go forge` to craft.');
       }
 
       function travel(rawArgs) {
+        setPage('map', true);
         if (!rawArgs.length) {
           line('Usage: travel <location or index>');
+          nextStep('Use `map` to view location numbers, then `travel 2`.');
           return;
         }
 
@@ -360,31 +620,37 @@
 
         state.location = target;
         line(`Travel complete. You are now at ${state.location}.`);
+        nextStep('Use `forage` at this island, or `map` to pick another route.');
       }
 
       function listBlueprints() {
+        setPage('forge', true);
         line('Blueprint catalog:');
         Object.entries(blueprints).forEach(([category, items]) => {
           line(` ${category}`);
           items.forEach((item) => line(`   - ${item}`));
         });
+        nextStep('Type `forge steel_broad_sword` or press Tab after typing `forge ` to complete a blueprint.');
       }
 
       function forge(args) {
+        setPage('forge', true);
         if (!args.length) {
           line('Usage: forge <blueprint_key>');
+          nextStep('Use `blueprints` to list options, then `forge steel_broad_sword`.');
           return;
         }
         const key = args[0];
         const allBlueprints = Object.values(blueprints).flat();
         if (!allBlueprints.includes(key)) {
           line(`Unknown blueprint: ${key}`);
+          nextStep('Use `blueprints` to see exact blueprint keys.');
           return;
         }
         const id = `AST-${String(state.forges.length + 1).padStart(3, '0')}-FORGED`;
         state.forges.push({ id, key, location: state.location, day: state.day });
         line(`Forged ${id} from ${key}.`);
-        line('Use optimize to score your gear after forging.');
+        nextStep('Use `optimize` to score your gear, or `inventory` to review materials.');
       }
 
       function optimize() {
@@ -394,6 +660,7 @@
         line('  - Stat confidence: High');
         line('  - Enchantment density: Moderate');
         line('  - Build coherence: Good');
+        nextStep('Use `benchmark` to compare, or `go inventory` and `forage` for more resources.');
       }
 
       function benchmark() {
@@ -404,23 +671,40 @@
           { id: 'AST-003-FORGED', score: 69 },
         ];
         top.forEach((entry, idx) => line(` ${idx + 1}. ${entry.id}: ${entry.score}`));
+        nextStep('Use `forge <blueprint>` to create another item and improve the leaderboard.');
       }
 
       function roles() {
         line('Optimization roles: DPS, Tank, Support, Controller, Balanced.');
+        nextStep('Use `optimize` to score your current gear under the active role.');
       }
 
       function talents() {
+        setPage('talents', true);
         if (!state.talents.size) {
           line('No active talent tags yet. Unlock through gameplay nodes later.');
+          nextStep('Return with `go forge`, or explore future growth with `roles`.');
           return;
         }
         line(`Talents (${state.talents.size}): ${Array.from(state.talents).join(', ')}`);
+        nextStep('Use `go forge` after planning your build.');
+      }
+
+      function market() {
+        setPage('market', true);
+        line('Marketplace board:');
+        line(`  Shells: ${state.shells}`);
+        line('  black_salt x3      6 shells');
+        line('  moon_shroud_mask   15 shells');
+        line('  ancient_gel x4     11 shells');
+        line('');
+        line('Trading is a placeholder in this web terminal. Full buy/sell hooks come later.');
+        nextStep('Use `go inventory` to review goods, or `go forge` to spend materials.');
       }
 
       function unknown(cmd) {
         line(`Unknown command: ${cmd}`);
-        line('Try `help` for available commands.');
+        nextStep('Try `help`, `nav`, or press Tab to autocomplete.');
       }
 
       function execute(raw) {
@@ -449,6 +733,13 @@
           case 'status':
             showStatus();
             break;
+          case 'nav':
+          case 'places':
+            showNav();
+            break;
+          case 'go':
+            setPage((args[0] || '').toLowerCase());
+            break;
           case 'map':
             listMap();
             break;
@@ -456,10 +747,13 @@
             travel(args);
             break;
           case 'forage':
-            forage();
+            forage(args);
             break;
           case 'inventory':
             showInventory();
+            break;
+          case 'market':
+            market();
             break;
           case 'blueprints':
             listBlueprints();
@@ -500,6 +794,12 @@
       });
 
       input.addEventListener('keydown', (event) => {
+        if (event.key === 'Tab') {
+          event.preventDefault();
+          completeInput();
+          return;
+        }
+
         if (event.key === 'ArrowUp') {
           event.preventDefault();
           if (!history.length) {
@@ -521,15 +821,15 @@
         }
       });
 
-      pillButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          const command = button.dataset.command;
-          input.value = command;
-          input.focus();
-          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-        });
+      input.addEventListener('input', () => {
+        completionMatches = [];
+        completionIndex = -1;
+        updateHint();
       });
 
+      updateAutocompleteList();
+      setPage('forge', true);
+      bindCommandButtons();
       banner();
       commandHelp();
     </script>
