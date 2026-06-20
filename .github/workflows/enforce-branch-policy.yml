@@ -1,0 +1,33 @@
+name: Enforce Branch Policy
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-source-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Validate PR source branch name
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: |
+          case "${SOURCE_BRANCH}" in
+            feature/materials-supplies/*|feature/gameplay/*|feature/talent-system/*|feature/item-stats/*|feature/balancing/*|fix/*|chore/*|docs/*|test/*)
+              echo "Branch pattern accepted: ${SOURCE_BRANCH}"
+              ;;
+            *)
+              echo "Branch '${SOURCE_BRANCH}' is not allowed."
+              echo "Use one of:"
+              echo "  feature/materials-supplies/<desc>"
+              echo "  feature/gameplay/<desc>"
+              echo "  feature/talent-system/<desc>"
+              echo "  feature/item-stats/<desc>"
+              echo "  feature/balancing/<desc>"
+              echo "  fix/<desc>, chore/<desc>, docs/<desc>, test/<desc>"
+              exit 1
+              ;;
+          esac
