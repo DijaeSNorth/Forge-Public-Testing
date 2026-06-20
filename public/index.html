@@ -1,69 +1,537 @@
-ï»¿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Forge Public Testing</title>
+    <title>Forge CLI Test Terminal</title>
     <style>
       :root {
-        --bg: #0f172a;
-        --card: #111827;
-        --text: #e5e7eb;
-        --muted: #9ca3af;
-        --accent: #60a5fa;
+        --bg: #020617;
+        --panel: #020617;
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --border: #334155;
+        --accent: #22c55e;
+        --accent-2: #60a5fa;
       }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
-        font-family: "Segoe UI", Arial, sans-serif;
-        background: radial-gradient(circle at 20% 20%, #1f2937, var(--bg));
-        color: var(--text);
         min-height: 100vh;
+        background: radial-gradient(circle at 20% 0%, #0b3f63, var(--bg));
+        color: var(--text);
+        font-family: "Consolas", "Menlo", "Courier New", monospace;
         display: grid;
         place-items: center;
-        padding: 2rem;
+        padding: 1.25rem;
       }
+
+      .page {
+        width: min(980px, 100%);
+        display: grid;
+        gap: 0.9rem;
+      }
+
       .card {
-        max-width: 720px;
         width: 100%;
-        background: var(--card);
-        border: 1px solid #1d4ed8;
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 20px 50px rgba(0,0,0,.35);
-      }
-      h1 { margin: 0 0 .6rem; color: #fff; }
-      p { margin: .25rem 0; color: var(--muted); }
-      .status {
-        margin-top: 1rem;
-        padding: 1rem;
-        border: 1px solid #374151;
+        border: 1px solid var(--border);
         border-radius: 12px;
-        background: #0b1220;
+        background: rgba(15, 23, 42, 0.84);
+        box-shadow: 0 20px 55px rgba(0, 0, 0, 0.45);
       }
-      code {
-        background: #020617;
-        padding: 0 .35rem;
-        border-radius: .35rem;
+
+      .header {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        color: #cbd5e1;
+        font-size: 0.9rem;
       }
-      ul { margin-top: .8rem; }
-      a { color: var(--accent); }
+
+      .terminal {
+        height: 68vh;
+        min-height: 420px;
+        max-height: 70vh;
+        padding: 0.9rem 1rem 0.65rem;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #output {
+        margin: 0;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        line-height: 1.45;
+        letter-spacing: 0.01em;
+        color: #dbeafe;
+      }
+
+      .prompt-row {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        border-top: 1px solid var(--border);
+        padding-top: 0.55rem;
+        margin-top: 0.3rem;
+      }
+
+      .prompt {
+        color: var(--accent);
+        margin-right: 0.5rem;
+        font-weight: 700;
+      }
+
+      #commandInput {
+        appearance: none;
+        border: 0;
+        outline: 0;
+        width: 100%;
+        padding: 0.55rem 0.4rem;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        padding: 0.75rem;
+      }
+
+      button.pill {
+        font: inherit;
+        color: #e2e8f0;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 999px;
+        padding: 0.28rem 0.7rem;
+      }
+
+      button.pill:hover {
+        border-color: var(--accent);
+        cursor: pointer;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      a {
+        color: var(--accent-2);
+      }
+
+      @media (max-width: 760px) {
+        body {
+          padding: 0.5rem;
+        }
+
+        .terminal {
+          min-height: 62vh;
+          height: 78vh;
+        }
+      }
     </style>
   </head>
   <body>
-    <main class="card">
-      <h1>Forge Public Testing</h1>
-      <p>Automated public testing deployment for the Forge project.</p>
-      <div class="status">
-        <p><strong>Branch:</strong> <code>codex/talent-categories</code></p>
-        <p><strong>Source:</strong> <code>public/</code></p>
-        <p><strong>Status:</strong> Deploy on each push via GitHub Actions.</p>
-      </div>
-      <ul>
-        <li>Push updates to <code>codex/talent-categories</code>.</li>
-        <li>GitHub Actions builds and publishes this page automatically.</li>
-        <li>Use this page as your public test endpoint.</li>
-      </ul>
-      <p><a href="https://github.com/DijaeSNorth/Forge-Public-Testing" target="_blank" rel="noreferrer">Open test repository</a></p>
+    <main class="page">
+      <section class="card">
+        <div class="header">
+          <strong>Forge Public Testing Terminal</strong>
+          <span class="muted">Branch: <code>main</code> · Deploy: <code>/public</code></span>
+        </div>
+        <div class="terminal">
+          <pre id="output" aria-live="polite"></pre>
+          <form id="commandForm" class="prompt-row" autocomplete="off">
+            <span class="prompt">forge&gt;</span>
+            <input
+              id="commandInput"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="Type a command, e.g. help"
+            />
+          </form>
+        </div>
+        <div class="pill-row">
+          <button class="pill" type="button" data-command="help">help</button>
+          <button class="pill" type="button" data-command="map">map</button>
+          <button class="pill" type="button" data-command="forage">forage</button>
+          <button class="pill" type="button" data-command="inventory">inventory</button>
+          <button class="pill" type="button" data-command="blueprints">blueprints</button>
+          <button class="pill" type="button" data-command="status">status</button>
+          <button class="pill" type="button" data-command="seed">seed</button>
+          <button class="pill" type="button" data-command="clear">clear</button>
+        </div>
+      </section>
+      <section class="card" style="padding:0.85rem 1rem 1rem;color:#e2e8f0;font-size:0.9rem;">
+        <p style="margin:.3rem 0">This is the GitHub Pages test app. It mirrors terminal-style play flow in-browser:</p>
+        <ul style="margin:.4rem 0 .1rem 1.1rem;line-height:1.6">
+          <li>Type game commands with <code>forge&gt;</code> prompt.</li>
+          <li>Use arrow keys for history and click quick commands above.</li>
+          <li>Current branch target: <code>main</code>.</li>
+        </ul>
+        <p style="margin:.6rem 0 0"><a href="https://github.com/DijaeSNorth/Forge-Public-Testing" target="_blank" rel="noreferrer">Open repository</a></p>
+      </section>
     </main>
+
+    <script>
+      const output = document.getElementById('output');
+      const form = document.getElementById('commandForm');
+      const input = document.getElementById('commandInput');
+      const pillButtons = Array.from(document.querySelectorAll('[data-command]'));
+
+      const state = {
+        location: 'Bermuda Abyss',
+        day: 1,
+        materials: {
+          "Aether Iron": 2,
+          "Moonstone Dust": 1,
+          "Ghost Reed": 5,
+        },
+        cosmetics: {
+          "Moon-Tide Cloth": 1,
+        },
+        forges: [],
+        talents: new Set(),
+        role: 'Controller',
+        forgeName: 'Default Forge',
+        player: 'Guest Smith',
+      };
+
+      const locations = [
+        'Bermuda Abyss',
+        'Atlantean Deep',
+        'Oakvault Cay',
+        'Poveglia Mire',
+        'Hashima Iron Reef',
+      ];
+
+      const blueprints = {
+        weapon: ['steel_broad_sword', 'war_hammer', 'arc_lance'],
+        tool: ['mithril_tinker_kit', 'precision_plow'],
+        wearable: ['dragonhide_armor', 'arcane_mantle'],
+        misc: ['forgehammer_maintenance_pick', 'aether_runner'],
+      };
+
+      const history = [];
+      let historyIndex = -1;
+
+      function line(text = '') {
+        output.textContent += `${text}\n`;
+        output.scrollTop = output.scrollHeight;
+      }
+
+      function banner() {
+        line('Welcome to Forge Terminal Test.');
+        line('Type `help` to list available commands.');
+        line('');
+      }
+
+      function commandHelp() {
+        line('Available commands:');
+        line('  help                     show this help screen');
+        line('  clear                    clear terminal output');
+        line('  seed                     load starter inventory and stats');
+        line('  status                   show player/location snapshot');
+        line('  map                      show island locations');
+        line('  travel <location>        move to an island (name or index 1-5)');
+        line('  forage                   add random materials from current location');
+        line('  inventory                list materials/cosmetics/inventory');
+        line('  blueprints               list sample forge blueprints');
+        line('  forge <blueprint>        craft a sample artifact');
+        line('  talents                  list active talent tags');
+        line('  roles                    list valid optimization roles');
+        line('  optimize                 show role score summary for current gear');
+        line('  benchmark                show sample leaderboard snapshot');
+        line('');
+      }
+
+      function resetSeed() {
+        state.location = 'Bermuda Abyss';
+        state.day = 1;
+        state.materials = {
+          "Aether Iron": 2,
+          "Moonstone Dust": 1,
+          "Ghost Reed": 5,
+        };
+        state.cosmetics = {
+          "Moon-Tide Cloth": 1,
+        };
+        state.forges = [];
+        state.talents.clear();
+        line('Seed applied. Baseline profile loaded.');
+      }
+
+      function showStatus() {
+        line(`Player: ${state.player}`);
+        line(`Forge: ${state.forgeName}`);
+        line(`Role: ${state.role}`);
+        line(`Day: ${state.day}`);
+        line(`Location: ${state.location}`);
+      }
+
+      function listMap() {
+        line('Known locations:');
+        locations.forEach((loc, index) => {
+          const marker = loc === state.location ? ' *' : '  ';
+          line(` ${index + 1}. ${marker} ${loc}`);
+        });
+      }
+
+      function showInventory() {
+        line('Materials:');
+        const materials = Object.entries(state.materials);
+        if (!materials.length) {
+          line('  (none)');
+        } else {
+          materials.forEach(([name, qty]) => line(`  ${name}: ${qty}`));
+        }
+
+        line('');
+        line('Cosmetics:');
+        const cosmetics = Object.entries(state.cosmetics);
+        if (!cosmetics.length) {
+          line('  (none)');
+        } else {
+          cosmetics.forEach(([name, qty]) => line(`  ${name}: ${qty}`));
+        }
+
+        line('');
+        line(`Forged assets this session: ${state.forges.length}`);
+      }
+
+      function randomFrom(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function forage() {
+        const gain = {
+          'Bermuda Abyss': ['Aether Iron', 'Salt Pearl'],
+          'Atlantean Deep': ['Ghost Reed', 'Siren Thread'],
+          'Oakvault Cay': ['Moonstone Dust', 'Verdant Bark'],
+          'Poveglia Mire': ['Toxic Clay', 'Bog Crystal'],
+          'Hashima Iron Reef': ['Iron Scale', 'Aether Iron'],
+        }[state.location] || ['Mystery Shards'];
+
+        const picked = gain[randomFrom(0, gain.length - 1)];
+        const amt = randomFrom(1, 3);
+        state.materials[picked] = (state.materials[picked] || 0) + amt;
+        state.day += 1;
+        line(`Forage completed at ${state.location}.`);
+        line(` +${amt} ${picked}`);
+      }
+
+      function travel(rawArgs) {
+        if (!rawArgs.length) {
+          line('Usage: travel <location or index>');
+          return;
+        }
+
+        const targetRaw = rawArgs.join(' ');
+        let target = locations.find((loc) => loc.toLowerCase() === targetRaw.toLowerCase());
+
+        if (!target && /^\d+$/.test(targetRaw)) {
+          const idx = Number(targetRaw);
+          if (idx >= 1 && idx <= locations.length) {
+            target = locations[idx - 1];
+          }
+        }
+
+        if (!target) {
+          line('Unknown location. Use `map` to view available stops.');
+          return;
+        }
+
+        if (target === state.location) {
+          line(`Already at ${state.location}.`);
+          return;
+        }
+
+        state.location = target;
+        line(`Travel complete. You are now at ${state.location}.`);
+      }
+
+      function listBlueprints() {
+        line('Blueprint catalog:');
+        Object.entries(blueprints).forEach(([category, items]) => {
+          line(` ${category}`);
+          items.forEach((item) => line(`   - ${item}`));
+        });
+      }
+
+      function forge(args) {
+        if (!args.length) {
+          line('Usage: forge <blueprint_key>');
+          return;
+        }
+        const key = args[0];
+        const allBlueprints = Object.values(blueprints).flat();
+        if (!allBlueprints.includes(key)) {
+          line(`Unknown blueprint: ${key}`);
+          return;
+        }
+        const id = `AST-${String(state.forges.length + 1).padStart(3, '0')}-FORGED`;
+        state.forges.push({ id, key, location: state.location, day: state.day });
+        line(`Forged ${id} from ${key}.`);
+        line('Use optimize to score your gear after forging.');
+      }
+
+      function optimize() {
+        const score = Math.max(10, 55 + state.day * 3 + state.forges.length * 7 + Object.keys(state.materials).length * 4);
+        line(`Optimization profile: ${state.role}`);
+        line(`Current session score: ${score}`);
+        line('  - Stat confidence: High');
+        line('  - Enchantment density: Moderate');
+        line('  - Build coherence: Good');
+      }
+
+      function benchmark() {
+        line('Benchmark snapshot:');
+        const top = [
+          { id: 'AST-001-FORGED', score: 86 },
+          { id: 'AST-002-FORGED', score: 74 },
+          { id: 'AST-003-FORGED', score: 69 },
+        ];
+        top.forEach((entry, idx) => line(` ${idx + 1}. ${entry.id}: ${entry.score}`));
+      }
+
+      function roles() {
+        line('Optimization roles: DPS, Tank, Support, Controller, Balanced.');
+      }
+
+      function talents() {
+        if (!state.talents.size) {
+          line('No active talent tags yet. Unlock through gameplay nodes later.');
+          return;
+        }
+        line(`Talents (${state.talents.size}): ${Array.from(state.talents).join(', ')}`);
+      }
+
+      function unknown(cmd) {
+        line(`Unknown command: ${cmd}`);
+        line('Try `help` for available commands.');
+      }
+
+      function execute(raw) {
+        const trimmed = raw.trim();
+        line(`$ forge> ${trimmed}`);
+
+        if (!trimmed) {
+          return;
+        }
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        switch (cmd) {
+          case 'help':
+            commandHelp();
+            break;
+          case 'clear':
+            output.textContent = '';
+            banner();
+            break;
+          case 'seed':
+            resetSeed();
+            break;
+          case 'status':
+            showStatus();
+            break;
+          case 'map':
+            listMap();
+            break;
+          case 'travel':
+            travel(args);
+            break;
+          case 'forage':
+            forage();
+            break;
+          case 'inventory':
+            showInventory();
+            break;
+          case 'blueprints':
+            listBlueprints();
+            break;
+          case 'forge':
+            forge(args);
+            break;
+          case 'optimize':
+            optimize();
+            break;
+          case 'benchmark':
+            benchmark();
+            break;
+          case 'roles':
+            roles();
+            break;
+          case 'talents':
+            talents();
+            break;
+          default:
+            unknown(cmd);
+        }
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const raw = input.value;
+        input.value = '';
+
+        if (!raw.trim()) {
+          return;
+        }
+
+        history.unshift(raw);
+        historyIndex = -1;
+
+        execute(raw);
+      });
+
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          if (!history.length) {
+            return;
+          }
+          if (historyIndex + 1 < history.length) {
+            historyIndex += 1;
+          }
+          input.value = history[historyIndex] || '';
+          return;
+        }
+
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          if (historyIndex > -1) {
+            historyIndex -= 1;
+          }
+          input.value = historyIndex >= 0 ? history[historyIndex] : '';
+        }
+      });
+
+      pillButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const command = button.dataset.command;
+          input.value = command;
+          input.focus();
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        });
+      });
+
+      banner();
+      commandHelp();
+    </script>
   </body>
 </html>
