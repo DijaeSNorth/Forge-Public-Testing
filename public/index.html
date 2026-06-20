@@ -259,11 +259,11 @@
           <span class="muted">main / public</span>
         </div>
         <div class="place-row" aria-label="Main places">
-          <button class="place active" type="button" data-place="forge" data-command="go forge">Forge</button>
-          <button class="place" type="button" data-place="map" data-command="go map">Map</button>
-          <button class="place" type="button" data-place="inventory" data-command="go inventory">Inventory</button>
-          <button class="place" type="button" data-place="talents" data-command="go talents">Talents</button>
-          <button class="place" type="button" data-place="market" data-command="go market">Market</button>
+          <button class="place active" type="button" data-place="forge" data-command="open forge">Forge</button>
+          <button class="place" type="button" data-place="map" data-command="open map">Map</button>
+          <button class="place" type="button" data-place="inventory" data-command="open inventory">Inventory</button>
+          <button class="place" type="button" data-place="talents" data-command="open talents">Talents</button>
+          <button class="place" type="button" data-place="market" data-command="open market">Market</button>
         </div>
         <div class="terminal">
           <pre id="output" aria-live="polite"></pre>
@@ -397,6 +397,24 @@
           'status',
           'nav',
           'places',
+          'list',
+          'list forge',
+          'list map',
+          'list locations',
+          'list inventory',
+          'list blueprints',
+          'list blue prints',
+          'list talents',
+          'list market',
+          'open forge',
+          'open map',
+          'open inventory',
+          'open blueprints',
+          'open talents',
+          'open market',
+          'show inventory',
+          'show blueprints',
+          'check inventory',
           'map',
           'market',
           'go forge',
@@ -526,6 +544,9 @@
         line('  status                   show player/location snapshot');
         line('  nav                      show main places and navigation tips');
         line('  go <place>               jump to forge, map, inventory, talents, or market');
+        line('  open <target>            open and list a target, e.g. open inventory');
+        line('  list [target]            list current place or inventory/blueprints/map/talents/market');
+        line('  show/check <target>      natural aliases for list/open commands');
         line('  map                      show island locations');
         line('  travel <location>        move to an island (name or index 1-5)');
         line('  forage                   add random materials from current location');
@@ -760,6 +781,143 @@
         nextStep('Use `go inventory` to review goods, or `go forge` to spend materials.');
       }
 
+      function normalizeTarget(rawTarget = '') {
+        const target = rawTarget
+          .trim()
+          .toLowerCase()
+          .replace(/[-_]+/g, ' ')
+          .replace(/\s+/g, ' ');
+
+        const aliases = {
+          '': '',
+          here: '',
+          current: '',
+          forge: 'forge',
+          home: 'forge',
+          main: 'forge',
+          map: 'map',
+          location: 'map',
+          locations: 'map',
+          island: 'map',
+          islands: 'map',
+          inventory: 'inventory',
+          inv: 'inventory',
+          bag: 'inventory',
+          backpack: 'inventory',
+          materials: 'inventory',
+          cosmetics: 'inventory',
+          blueprint: 'blueprints',
+          blueprints: 'blueprints',
+          'blue print': 'blueprints',
+          'blue prints': 'blueprints',
+          bp: 'blueprints',
+          bps: 'blueprints',
+          talent: 'talents',
+          talents: 'talents',
+          skill: 'talents',
+          skills: 'talents',
+          'skill tree': 'talents',
+          'talent tree': 'talents',
+          market: 'market',
+          marketplace: 'market',
+          trade: 'market',
+          trading: 'market',
+        };
+
+        return Object.prototype.hasOwnProperty.call(aliases, target) ? aliases[target] : target;
+      }
+
+      function listCurrentPage() {
+        switch (state.page) {
+          case 'forge':
+            listBlueprints();
+            break;
+          case 'map':
+            listMap();
+            break;
+          case 'inventory':
+            showInventory();
+            break;
+          case 'talents':
+            talents();
+            break;
+          case 'market':
+            market();
+            break;
+          default:
+            showStatus();
+        }
+      }
+
+      function listTarget(rawTarget = '') {
+        const target = normalizeTarget(rawTarget);
+        switch (target) {
+          case '':
+            listCurrentPage();
+            break;
+          case 'forge':
+          case 'blueprints':
+            listBlueprints();
+            break;
+          case 'map':
+            listMap();
+            break;
+          case 'inventory':
+            showInventory();
+            break;
+          case 'talents':
+            talents();
+            break;
+          case 'market':
+            market();
+            break;
+          default:
+            line(`Unknown list target: ${rawTarget || target}`);
+            nextStep('Try `list inventory`, `list blueprints`, `open map`, or `open market`.');
+        }
+      }
+
+      function normalizeCommand(raw) {
+        const original = raw.trim();
+        const compact = original
+          .toLowerCase()
+          .replace(/[-_]+/g, ' ')
+          .replace(/\s+/g, ' ');
+
+        const directAliases = {
+          inv: 'inventory',
+          bag: 'inventory',
+          backpack: 'inventory',
+          locations: 'map',
+          islands: 'map',
+          marketplace: 'market',
+          trade: 'market',
+          blueprint: 'blueprints',
+          blueprints: 'blueprints',
+          'blue print': 'blueprints',
+          'blue prints': 'blueprints',
+          bp: 'blueprints',
+          bps: 'blueprints',
+          'skill tree': 'talents',
+          'talent tree': 'talents',
+        };
+
+        if (Object.prototype.hasOwnProperty.call(directAliases, compact)) {
+          return directAliases[compact];
+        }
+
+        const listPhrase = compact.match(/^(open|show|view|display|check|list)\s+(.+)$/);
+        if (listPhrase) {
+          return `list ${normalizeTarget(listPhrase[2])}`;
+        }
+
+        if (/^(open|show|view|display|check|list)$/.test(compact)) {
+          return 'list';
+        }
+
+        return original;
+      }
+
       function unknown(cmd) {
         line(`Unknown command: ${cmd}`);
         nextStep('Try `help`, `nav`, or press Tab to autocomplete.');
@@ -773,7 +931,8 @@
           return;
         }
 
-        const parts = trimmed.split(/\s+/);
+        const normalized = normalizeCommand(trimmed);
+        const parts = normalized.split(/\s+/);
         const cmd = parts[0].toLowerCase();
         const args = parts.slice(1);
 
@@ -794,6 +953,9 @@
           case 'nav':
           case 'places':
             showNav();
+            break;
+          case 'list':
+            listTarget(args.join(' '));
             break;
           case 'go':
             setPage((args[0] || '').toLowerCase());
