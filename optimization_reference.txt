@@ -1,0 +1,158 @@
+Optimization Engine Reference (Short)
+==================================
+
+Balancing changes in branch codex/item-stats-balancing
+-----------------------------------------------
+- Rarity-aware scoring:
+  - `common`, `uncommon`, `rare`, `epic`, `legendary`, `mythic` each map to:
+    - stat multiplier
+    - enchantment multiplier
+    - rarity bonus
+    - trigger cap
+- Enchantment-aware evaluation:
+  - Parses `magic_effects` and `applied_enhancements`.
+  - Detects trigger (`on_crit`, `on_hit`, `on_kill`, `on_cast`, `on_move`, state windows, etc.).
+  - Detects condition signals from `condition/conditions/when/requires` and target-state keys.
+  - Applies:
+    - trigger penalty for repeated same trigger
+    - condition/complexity bonus
+    - cooldown/frequency scaling
+- Score output now includes:
+  - `enchantment_score`
+  - `rarity_bonus`
+  - `enchantments` block with `group_scores`, `active_triggers`, `condition_density`, etc.
+
+If you want the evaluator to read game-defined enchantment metadata (e.g., trigger enums, condition keys),
+we can move these dictionaries to a dedicated config file for data-driven balancing.
+
+--------------------------------------------------------------------------------
+
+File: item_optimization.py
+
+Core objects
+- StatGroup
+  - id, name, category, aliases, normalize_as_percent (for tempo-like % values)
+- RoleProfile
+  - id, name, description, weights, core_groups, creativity_floor
+- ItemOptimizationEngine
+  - evaluate(item_payload, role="balanced")
+  - benchmark(assets, role="balanced")
+  - role_profiles()
+
+Stat grouping
+- Group IDs:
+  - core_damage
+  - crit_stats
+  - penetration
+  - on_hit
+  - health_core
+  - shield
+  - regen
+  - resistance
+  - avoidance
+  - mobility
+  - tempo
+  - resource
+  - resource_regen
+  - utility
+  - primary_attributes
+  - secondary_attributes
+- Group matching is alias-based; unrecognized stats default to utility.
+
+Score pipeline
+1) normalize stat keys and assign to groups using aliases
+2) convert values:
+   - clamp negatives to 0
+   - percent-style groups divided by 100
+   - dampening via log1p
+3) role_score:
+   - sum(group_value * role_weight)
+   - multiplied by 10 in the API return
+4) creativity score:
+   - boosts for:
+     - number of active families
+     - off-theme families vs role core
+     - category diversity
+   - penalties for over-concentration and meta overlap
+5) total_score:
+   - role_score * (1 - meta_clamp) + creativity_score
+
+Role profiles
+- dps:
+  - high on core_damage, crit_stats, penetration
+- tank:
+  - high on health_core, resistance, shield
+- support:
+  - utility + resource + resource_regen
+- controller:
+  - utility + tempo
+- balanced:
+- all-around weights across damage, sustain, defense, mobility, resource, utility
+
+CLI exposure
+- roles
+- optimize <asset_id> [role=<role>]
+- benchmark [category=<cat>] [rarity=<R>] [role=<role>] [top=<n>]
+- eval_stats <json>
+
+If you need, I can also generate a compact "load file + continue" script snippet that only prints these command outputs without entering the full game loop.
+Optimization Engine Reference (Short)
+==================================
+
+File: `item_optimization.py`
+- Purpose: deterministic item quality scoring for CLI flow.
+- Core objects
+  - `StatGroup`
+  - `RoleProfile`
+  - `ItemOptimizationEngine`
+    - `evaluate(item_payload, role="balanced")`
+    - `benchmark(assets, role="balanced")`
+    - `role_profiles()`
+
+Rarity-aware profile (current)
+- Each rarity entry defines:
+  - `stat_multiplier`
+  - `enchant_multiplier`
+  - `rarity_bonus`
+  - `trigger_cap`
+- `rarity_bonus` and rarity profile are always part of `total_score`.
+
+Scoring pipeline
+1) Normalize and group stats (alias-driven matching across grouped families).
+2) Apply role weights to produce role weighted score.
+3) Parse enchantment inputs from:
+  - `magic_effects`
+  - `applied_enhancements`
+4) Build enchantment score using:
+  - trigger detection (`on_crit`, `on_hit`, `on_kill`, `on_cast`, `on_move`, `state_window`, etc.)
+  - condition complexity and explicit gating signals
+  - cooldown + duration scaling
+  - trigger diversity / repeated-trigger penalties
+  - rarity enchantment multiplier and trigger cap
+5) Add creativity score from active group variety and off-theme diversity with meta-overlap dampening.
+6) Return final payload including role/creativity/enchantment/rank fields.
+
+Role profiles
+- `dps`: damage/crit/penalty oriented.
+- `tank`: health/resistance/shield focused.
+- `support`: resource + utility/sustain focused.
+- `controller`: utility + tempo focus.
+- `balanced`: hybrid baseline.
+
+CLI exposure (`cli_play.py`)
+- `roles`
+- `optimize <asset_id> [role=<role>]`
+- `benchmark [category=<cat>] [rarity=<R>] [role=<role>] [top=<n>]`
+- `eval_stats <json>`
+
+Output contract points
+- `evaluate` returns:
+  - `asset_id`, `name`, `rarity`, `role`
+  - `role_score`, `creativity_score`, `enchantment_score`, `rarity_bonus`, `total_score`
+  - `group_summary` (group-level role-weighted contributions)
+  - `enchantments` (trigger, condition, and effect details)
+  - `creativity` (active groups, dominant ratio, meta clamp, notes)
+
+Future-leaning reminder
+- Trigger aliases and condition keys are hard-coded in-engine constants.
+- If these vocabularies become game-specific, move them into a dedicated config file for data-driven tuning.

@@ -1,0 +1,189 @@
+ISLAND FORGE - MAP LOCATIONS REFERENCE
+=====================================
+
+Purpose
+-------
+This file defines the first launch map set and reserves later island concepts.
+Use this for future map, foraging, cosmetics, market, and encounter design.
+
+Launch map: first 5 locations
+-----------------------------
+
+1. Bermuda Abyss
+- Inspiration: Bermuda Triangle, vanishing ships, compass failure, time skips, ocean horror.
+- Gameplay role: starter mystery island and storm-material zone.
+- Primary resources:
+  - storm_iron_ore
+  - black_salt
+  - rift_whisper_algae
+  - ghostwood_resin
+  - coral_shards
+- Cosmetic themes:
+  - salt-lantern charms
+  - hull-stitched cloaks
+  - moon shroud masks
+- Talent links:
+  - Darkness/Shadows
+  - Storm/Tempest
+  - Luck/Fate
+  - Navigation/Cartography
+- Main activities:
+  - first foraging routes
+  - shipwreck salvage
+  - cursed compass events
+  - storm route tutorials
+
+2. Atlantean Deep
+- Inspiration: Atlantis, sunken empires, lost technology, underwater temples.
+- Gameplay role: relic-tech island and advanced forge-source discovery zone.
+- Primary resources:
+  - sunken_brass
+  - moonstone_glass
+  - tideglass_powder
+  - aetheric_algae
+  - ancient_gel
+- Cosmetic themes:
+  - coral crowns
+  - triton signal bracelets
+  - voidglass visors
+- Talent links:
+  - Atlantean Relic
+  - Cosmic
+  - Tide/Ocean
+  - Forgecraft
+- Main activities:
+  - drowned blueprint discovery
+  - relic puzzle routes
+  - pressure-gate foraging
+  - rare slot-material acquisition
+
+3. Oakvault Cay
+- Inspiration: Oak Island style treasure pits, false tunnels, cursed vault legends.
+- Gameplay role: treasure-hunt island and early marketplace material source.
+- Primary resources:
+  - old_map_fragments
+  - vault_clay
+  - rusted_cogwork
+  - buried_oak
+  - silvered_shells
+- Cosmetic themes:
+  - digger coats
+  - brass surveyor lenses
+  - vault-marked rings
+- Talent links:
+  - Luck/Fate
+  - Navigation/Cartography
+  - Commerce/Marketplace
+  - Echo/Memory
+- Main activities:
+  - buried cache search
+  - map-fragment collection
+  - sellable treasure finds
+  - false-route risk events
+
+4. Poveglia Mire
+- Inspiration: haunted quarantine island, plague history, abandoned hospital horror.
+- Gameplay role: curse, ritual, ward, and high-risk cosmetic island.
+- Primary resources:
+  - plague_bell_bronze
+  - fever_moss
+  - cracked_porcelain
+  - ash_salt
+  - ward_thread
+- Cosmetic themes:
+  - plague masks
+  - bell charms
+  - ash-veiled robes
+- Talent links:
+  - Curse/Ritual
+  - Wards/Protection
+  - Darkness/Shadows
+  - Echo/Memory
+- Main activities:
+  - ritual ward gathering
+  - cursed forge components
+  - haunted cosmetic discovery
+  - risk/reward material routes
+
+5. Hashima Iron Reef
+- Inspiration: abandoned industrial island, sea-ruined concrete, collapsed mines.
+- Gameplay role: industrial salvage island and practical crafting resource zone.
+- Primary resources:
+  - reef_steel
+  - machine_salt
+  - concrete_bone
+  - coalglass
+  - rust_bloom
+- Cosmetic themes:
+  - miner lamps
+  - rusted exo-harnesses
+  - signal-worker coats
+- Talent links:
+  - Forgecraft
+  - Commerce/Marketplace
+  - Wards/Protection
+  - Storm/Tempest
+- Main activities:
+  - practical material farming
+  - machine salvage
+  - marketplace supply loop
+  - industrial forge route unlocks
+
+Reserved later locations
+------------------------
+Keep these out of the first implementation pass unless a mechanic specifically needs one.
+
+- Hy-Brasil Veil
+  - Phantom island, cycle-based appearance, Luck/Fate and Cosmic route.
+- Fogbound Lighthouse
+  - Psychological horror island, shadow routes, signal puzzles.
+- Skullbreaker Atoll
+  - Giant-monster island archetype, titan bones, dangerous expeditions.
+- Sable Wreckline
+  - Shipwreck chain, salvage loop, drowned captain events.
+- Easter Monolith Isle
+  - Stone statue puzzles, ancestor echoes, sun/moon alignment.
+- Socotra Bloom
+  - Alien botany, rare resins, strange plant cosmetics.
+- Yonaguni Steps
+  - Underwater stepped ruins, pressure diving, stone relics.
+- Nan Madol Gates
+  - Basalt canal ruins, water-grid routes, black-stone resources.
+- Avalon Orchard
+  - Healing mist island, restoration materials, ward cosmetics.
+- Lyonesse Drowned Coast
+  - Sunken kingdom, tide puzzles, noble relic routes.
+- Lemurian Drift
+  - Lost-civilization island chain, crystals, memory archives.
+- Mu Broken Crown
+  - Broken continent fragments, gravity oddities, cosmic machines.
+- Aeaea Witchshore
+  - Sorcery island, transformation rituals, curse resources.
+- Ogygia Stillwater
+  - Time-trap island, memory loops, age-based materials.
+- Siren Teeth
+  - Razor-rock chain, sound hazards, charm cosmetics.
+- Thule Northstar
+  - Far-north mythical route, star navigation, cold-light metals.
+- Buyan Turning Isle
+  - Moving island, rotating map position, travel challenge.
+- Resort of Empty Rooms
+  - Abandoned luxury island, hidden VIP vaults, horror marketplace hooks.
+- Pirate Glass Lagoon
+  - Treasure island archetype, cursed coins, ship cosmetics.
+- Red Tide Carnival
+  - Abandoned island fairground, luck games, cursed prizes.
+- Mirror Isle
+  - Reality-bending island, duplicate events, reversed forge recipes.
+
+First implementation recommendation
+-----------------------------------
+- Keep `Bermuda Abyss` as default starting island.
+- Add all five launch locations to map/forage data before expanding.
+- Make each island own:
+  - material pool
+  - cosmetic pool
+  - risk profile
+  - preferred talent domains
+  - one signature event hook
+- Do not build combat or full quest systems yet. Start with travel, forage, discovery, and market supply.

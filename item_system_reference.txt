@@ -1,0 +1,178 @@
+ITEM CREATION GAME - REFERENCE SNAPSHOT
+=======================================
+
+Project root:
+- C:\Users\jaysl\Documents\Forge Terminal Gmae
+
+Purpose:
+- Keep this file as the short-term memory/source of truth for continuing work without
+  reloading the full context window.
+
+What was added recently:
+1) New optimization engine module
+   - File: item_optimization.py
+   - Exposes:
+     - Stat grouping by families (including Crit Stats as a grouped pair: critical chance + critical damage)
+     - Role scoring profiles:
+       - dps
+       - tank
+       - support
+       - controller
+       - balanced
+     - evaluate(item_payload, role) -> role_score, creativity_score, total_score
+     - benchmark(assets, role) -> ranked list with ranks
+     - role_profiles() -> available role definitions
+
+2) CLI integration in terminal UI
+   - File: cli_play.py
+   - New commands:
+     - roles
+     - optimize <asset_id> [role=<role>]
+     - benchmark [category=<cat>] [rarity=<R>] [role=<role>] [top=<n>]
+     - eval_stats <json>
+   - Example:
+     - roles
+     - optimize AST-0001-ABCDEF role=dps
+     - benchmark category=weapon role=controller top=5
+     - eval_stats {"stats":{"damage":28,"critical_chance":14,"critical_damage":150,"mana":120,"movement_speed":8},"role":"support"}
+
+3) README update
+  - File: README.md
+  - Added optimization/creativity usage examples and command list.
+
+Balancing iteration (latest):
+- Rarity-aware optimization now active in branch:
+  - `item_optimization.py` adds power multipliers and trigger caps per rarity:
+    - common / uncommon / rare / epic / legendary / mythic.
+    - higher rarity boosts both raw stat impact and enchantment payoff.
+- Enchantments are now first-class evaluation inputs:
+  - `magic_effects` and `applied_enhancements` are scored.
+  - Trigger diversity + condition complexity increases score.
+  - Repeated single trigger families are penalized for predictability.
+
+How this helps context control:
+- Future sessions can re-load this file first to reconstruct the latest feature state.
+- Avoids replaying long historical chat and lets edits stay focused.
+
+Suggested usage when context is low:
+- Start with:
+  - item_system_reference.txt
+  - README.md
+- Then modify only specific files needed for requested change.
+ITEM FORGE - SESSION REFERENCE SNAPSHOT
+=====================================
+
+Use this file first when returning to planning/implementation so we do not reload full context.
+
+PROJECT ROOT
+- `C:\Users\jaysl\Documents\Forge Terminal Gmae`
+
+CORE MODULES
+- `game_logic.py`
+  - Data model: `GameLogic`, `AssetBlueprint`, `ForgedAsset`, `CraftingSource`, `NFToken`.
+  - Enums: `AssetClass` (`mythical_tool`, `practical_tool`, `weapon`, `vehicle`, `accessory`, `generic`) and `Rarity` (`common` → `mythic`).
+  - Canonical flow entrypoints used by CLI:
+    - `seed_demo_blueprints()`
+    - `list_blueprints(category=None, rarity=None)`
+    - `source_for_blueprint(key)`
+    - `list_assets(category=None, rarity=None)`
+    - `create_blueprint(...)`
+    - `forge_asset(...)`
+    - `get_asset(asset_id)`
+    - `program_asset(asset_id, steps)`
+    - `set_slot_lock(asset_id, slot_id, locked=True/False)`
+    - `reroll_slot_magic(asset_id, slot_ids=None, seed=None)`
+    - `increase_slot_rolls(asset_id, slot_id, additional_rolls=1, seed=None)`
+    - `mint_asset_nft(asset_id, chain="local", contract_hint=None)`
+    - `export_portable_payload(asset_id, target_game="universal")`
+- `cli_play.py`
+  - Terminal loop + command dispatcher.
+  - Commands: `title`, `tutorial`, `profile`, `seed`, `blueprints`, `sources`, `assets`, `new_blueprint`, `forge`, `program`,
+    `slot_lock`, `slot_unlock`, `slot_reroll`, `slot_upgrade`,
+    `roles`, `optimize`, `benchmark`, `eval_stats`,
+    `mint`, `port`, `show`, `help`.
+- `item_optimization.py`
+  - `ItemOptimizationEngine`
+    - `evaluate(item_payload, role="balanced")`
+    - `benchmark(assets, role="balanced")`
+    - `role_profiles()`
+  - `StatGroup`, `RoleProfile`, role profiles (`dps`, `tank`, `support`, `controller`, `balanced`).
+
+GAMEPLAY FLOW (CLI)
+1. `seed` loads demo blueprints.
+2. `blueprints` explore assets by `category`/`rarity`.
+3. `sources <blueprint_key>` inspect crafting routes.
+4. `forge <json>` produce an asset:
+   - selects a crafting source (`crafting_source_id` optional)
+   - applies source + slot bonuses
+   - auto-fills slots from explicit `addons` then mythic materials
+   - applies slot magic rolls and optional lock state
+5. Optional: `program`, `slot_lock`, `slot_reroll`, `slot_upgrade`.
+6. Optional: `roles`/`optimize`/`benchmark`/`eval_stats` for balancing decisions.
+7. Optional: `mint` and `port` for cross-system handoff.
+
+ISLAND THEMING
+- Game is now anchored on mystery/island lore inspired by Bermuda, with Atlantean deep-ruin motifs.
+- Main gameplay places are separated into:
+  - `forge` page for creation and optimization commands.
+  - `inventory` page for materials/cosmetics collection.
+  - `talents` page for player progression nodes.
+  - `market` page for trading/marketplace flows.
+- Added onboarding + navigation commands:
+  - `go forge|inventory|talents|market` to move between main places.
+  - `forage`, `materials`, `cosmetics`, `learn_talent`, and `market` actions now exist for place-specific flows.
+
+PAGE FLOW (CLI)
+- Title page shown on startup.
+- Profile creation page prompts for:
+  - username
+  - forge name
+  - starting role
+- Tutorial intro runs once at entry, with a replay command available:
+  - `tutorial`
+- Main page is the Forge command surface after onboarding (`forge> ` prompt).
+
+FORGE STATE MODEL (short)
+- `AssetBlueprint` now stores:
+  - `category` grouping
+  - `crafting_sources` (with process steps, materials, tools, requirements, multipliers, risk, yield, enhancements)
+  - `addon_slots` (per-slot `slot_id`, `slot_type`, compatibility, roll bounds).
+- `ForgedAsset` tracks:
+  - `crafting_source_id`
+  - `applied_enhancements`, `magic_effects`
+  - `addon_slots_filled` containing slot source (addon/material/empty), roll metadata, lock status
+  - mythic material usage and provenance
+  - optional `NFToken` after mint.
+
+SLOT MAGIC FLOW
+- Forge defaults come from slot schema:
+  - `default_magic_rolls` (default 1)
+  - `max_magic_rolls` (default at least 3 unless raised)
+- Supported operations:
+  - `slot_roll_seed` + `slot_rolls` allow deterministic, per-slot roll budgets.
+  - `slot_lock` prevents `slot_reroll` from changing that slot.
+  - `slot_upgrade` increases `magic_roll_count` up to `max_magic_rolls` then rerolls that slot with same cap.
+
+SCORING/OPTIMIZATION MODEL
+- Role profiles from `item_optimization.py`:
+  - `dps`, `tank`, `support`, `controller`, `balanced`
+- Score shape:
+  - stat grouping/alias map → role weighted score
+  - rarity profile multipliers/bonuses (`stat_multiplier`, `enchant_multiplier`, `rarity_bonus`, `trigger_cap`)
+  - enchantment scoring with trigger/group/condition analysis
+  - creativity score for stat-family variety and meta-penalty
+  - `total_score` combines role score + creativity + enchantment + rarity bonus (with meta clamp).
+- `evaluate` output includes:
+  - `role_score`, `creativity_score`, `enchantment_score`, `rarity_bonus`, `total_score`
+  - `group_summary`, `enchantments`, `creativity`, `stats_count`, `family_count`.
+
+CURRENT CHECKPOINT
+- `README.md`, `optimization_reference.txt`, `talent_nodes_reference.txt`, `map_locations_reference.txt`, and this file are the short-memory boundary for this chat.
+- `talent_nodes_reference.txt` contains the future 100-node-per-domain talent architecture and 56 placeholder talent nodes.
+- `map_locations_reference.txt` contains the first five launch locations and reserved later island concepts.
+- Suggested startup order on context loss:
+  1) `item_system_reference.txt`
+  2) `optimization_reference.txt`
+  3) `talent_nodes_reference.txt`
+  4) `map_locations_reference.txt`
+  5) `README.md` for full command examples and catalog notes.

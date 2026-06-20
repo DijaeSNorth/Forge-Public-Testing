@@ -1,0 +1,69 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forge Public Testing</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #60a5fa;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: radial-gradient(circle at 20% 20%, #1f2937, var(--bg));
+        color: var(--text);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+      }
+      .card {
+        max-width: 720px;
+        width: 100%;
+        background: var(--card);
+        border: 1px solid #1d4ed8;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 20px 50px rgba(0,0,0,.35);
+      }
+      h1 { margin: 0 0 .6rem; color: #fff; }
+      p { margin: .25rem 0; color: var(--muted); }
+      .status {
+        margin-top: 1rem;
+        padding: 1rem;
+        border: 1px solid #374151;
+        border-radius: 12px;
+        background: #0b1220;
+      }
+      code {
+        background: #020617;
+        padding: 0 .35rem;
+        border-radius: .35rem;
+      }
+      ul { margin-top: .8rem; }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Forge Public Testing</h1>
+      <p>Automated public testing deployment for the Forge project.</p>
+      <div class="status">
+        <p><strong>Branch:</strong> <code>codex/talent-categories</code></p>
+        <p><strong>Source:</strong> <code>public/</code></p>
+        <p><strong>Status:</strong> Deploy on each push via GitHub Actions.</p>
+      </div>
+      <ul>
+        <li>Push updates to <code>codex/talent-categories</code>.</li>
+        <li>GitHub Actions builds and publishes this page automatically.</li>
+        <li>Use this page as your public test endpoint.</li>
+      </ul>
+      <p><a href="https://github.com/DijaeSNorth/Forge-Public-Testing" target="_blank" rel="noreferrer">Open test repository</a></p>
+    </main>
+  </body>
+</html>

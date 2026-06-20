@@ -1,0 +1,192 @@
+ISLAND FORGE - TALENT NODE SYSTEM REFERENCE
+==========================================
+
+Purpose
+-------
+This file is a planning handoff for the separate talent-system chat.
+Do not treat this as final implementation. It defines the shape, domains, and placeholders.
+
+Research scan notes
+-------------------
+- Large shared trees work when nodes have different weights: small passives, route nodes, notables,
+  keystones, and specialized end choices.
+- Grid-style progression works when players can see paths, spend points gradually, and unlock
+  different identity routes without changing class.
+- Multi-tree systems work when broad identity and specialized identity are separated.
+
+Sources checked for structure inspiration:
+- Path of Exile passive tree: dense shared network, class start positions, efficient pathing,
+  stronger specialized bonuses.
+- Final Fantasy X Sphere Grid: interconnected nodes, stat and ability unlocks, player-chosen route.
+- World of Warcraft Dragonflight talents: two-branch talent revamp pattern.
+
+Design goal
+-----------
+Every talent type should be able to support a full 100-node tree.
+Each tree should touch the four main places:
+- Forge: crafting, source routes, slot rolls, item optimization.
+- Inventory: materials, cosmetics, foraging, storage.
+- Talents: identity, long-term progression, keystones.
+- Marketplace: trading, pricing, listing bonuses, rare exchange hooks.
+
+100-node tree skeleton per talent type
+--------------------------------------
+Use this exact distribution for every major talent domain:
+
+- 1 root node
+  - The identity entry point for the domain.
+- 36 minor nodes
+  - Small passive bonuses, reliable incremental gains.
+- 16 route/gate nodes
+  - Branch connectors, island-zone unlocks, prerequisite pivots.
+- 12 utility nodes
+  - Quality-of-life, cooldown, stability, scouting, risk, or UI-facing bonuses.
+- 10 crafting nodes
+  - Forge output, slot control, roll quality, source-route bonuses.
+- 8 exploration nodes
+  - Foraging, mystery event, island travel, hazard mitigation.
+- 6 cosmetic nodes
+  - Cosmetic discovery, dye themes, profile flair, aura/skin unlock chances.
+- 4 marketplace nodes
+  - Trading fee, sell price, listing visibility, barter advantages.
+- 5 notable nodes
+  - Strong named bonuses that define a sub-build.
+- 1 keystone node
+  - Major identity tradeoff. Powerful, but changes how the domain plays.
+- 1 capstone node
+  - End-of-tree fantasy. Requires deep investment.
+
+Total: 100 nodes per talent type.
+
+Node type rules
+---------------
+- Minor: numeric, low-risk, repeatable structure.
+- Utility: changes friction, pacing, cooldowns, or risk.
+- Crafting: interacts with forge outcomes and artifact creation.
+- Exploration: interacts with island material and cosmetic gathering.
+- Marketplace: interacts with trade and economy.
+- Notable: named build identity without severe downside.
+- Keystone: major upside plus meaningful downside or routing commitment.
+- Capstone: final fantasy for the domain, no more than one per 100-node tree.
+
+Talent domains
+--------------
+Primary planned domains:
+- Darkness/Shadows
+- Elemental
+- Cosmic
+- Luck/Fate
+- Tide/Ocean
+- Storm/Tempest
+- Abyss/Depth
+- Atlantean Relic
+- Curse/Ritual
+- Forgecraft
+- Navigation/Cartography
+- Commerce/Marketplace
+- Wards/Protection
+- Echo/Memory
+
+Placeholder talent nodes
+------------------------
+These are placeholders. Each line can later expand into cost, prerequisites, effects, tuning,
+UI label, lore, unlock source, and balance notes.
+
+01. shadow_veil              | Darkness/Shadows | minor       | reduce island hazard chance after dark-zone forage
+02. black_lantern            | Darkness/Shadows | utility     | reveal one hidden material tag in mystery routes
+03. umbral_socket            | Darkness/Shadows | crafting    | chance for shadow-affinity slot roll on forge output
+04. noonday_eclipse          | Darkness/Shadows | keystone    | stronger shadow effects, weaker light/ward bonuses
+
+05. ember_hand               | Elemental        | minor       | small fire-source crafting bonus
+06. frost_salt               | Elemental        | exploration | better cold-depth material discovery
+07. stormglass_current       | Elemental        | crafting    | elemental addons gain better slot compatibility
+08. fourfold_conduit         | Elemental        | capstone    | combine multiple elemental tags into one forge route
+
+09. star_compass             | Cosmic           | route       | unlock cosmic lanes from island anomaly events
+10. lunar_measure            | Cosmic           | utility     | time-window events become easier to predict
+11. comet_inlay              | Cosmic           | crafting    | cosmic materials add small rarity pressure
+12. gravity_oath             | Cosmic           | keystone    | heavy artifacts gain power, movement bonuses weaken
+
+13. lucky_break              | Luck/Fate        | minor       | small bonus to extra material finds
+14. coin_of_the_deep         | Luck/Fate        | marketplace | small chance to discount seeded market listings
+15. second_chance_rite       | Luck/Fate        | utility     | one failed forage can become a low-yield success
+16. loaded_stars             | Luck/Fate        | keystone    | bigger lucky spikes, lower average stable yield
+
+17. tide_reader              | Tide/Ocean       | route       | unlock tide-cycle forage routes
+18. pearl_memory             | Tide/Ocean       | cosmetic    | higher chance for ocean-themed cosmetics
+19. brine_temper             | Tide/Ocean       | crafting    | corrosion-themed source routes gain durability
+20. drowning_bargain         | Tide/Ocean       | notable     | market listings made from ocean goods sell better
+
+21. pressure_breath          | Abyss/Depth      | minor       | reduce deep-zone hazard penalty
+22. trench_claim             | Abyss/Depth      | exploration | unlock abyss-only material table
+23. black_pressure_core      | Abyss/Depth      | crafting    | depth materials can add defense or stability rolls
+24. below_the_light          | Abyss/Depth      | capstone    | deep materials can transform one filled slot effect
+
+25. storm_sense              | Storm/Tempest    | minor       | increase storm-route material yield
+26. lightning_rod            | Storm/Tempest    | utility     | convert some storm failures into black_salt
+27. thunderclap_stamp        | Storm/Tempest    | crafting    | chance for on-hit or on-cast trigger tags
+28. eye_of_the_squall        | Storm/Tempest    | notable     | safer foraging during dangerous weather windows
+
+29. drowned_blueprint        | Atlantean Relic  | route       | unlock relic blueprint hints from island events
+30. sunken_math              | Atlantean Relic  | minor       | improve source-route stat multipliers slightly
+31. orichalcum_thread        | Atlantean Relic  | crafting    | relic materials improve addon slot budgets
+32. city_under_stars         | Atlantean Relic  | capstone    | relic route can create one unique cosmetic signature
+
+33. salt_hex                 | Curse/Ritual     | minor       | cursed materials gain slightly higher yield
+34. binding_circle           | Curse/Ritual     | utility     | lock one negative island event from repeating
+35. curseforge_brand         | Curse/Ritual     | crafting    | cursed forge routes can gain stronger triggers
+36. debt_to_the_depths       | Curse/Ritual     | keystone    | higher power rolls, greater chance of risk notes
+
+37. steady_hammer            | Forgecraft       | minor       | small crafting stability bonus
+38. artisan_measure          | Forgecraft       | utility     | show clearer forge-source comparison data later
+39. master_socketing         | Forgecraft       | notable     | slot upgrades gain better budget efficiency
+40. perfect_heat             | Forgecraft       | capstone    | first forge per session gains a controlled bonus hook
+
+41. dead_reckoning           | Navigation       | route       | reveal island route connections
+42. fog_chart                | Navigation       | utility     | reduce hidden-route failure chance
+43. landmark_cache           | Navigation       | exploration | chance to discover material caches while traveling
+44. cartographer_oath        | Navigation       | keystone    | map routes reveal more, but random finds decrease
+
+45. shell_counter            | Commerce         | minor       | gain small shell bonus from market activity
+46. contraband_display       | Commerce         | marketplace | cosmetics listed by player gain better visibility
+47. barter_tongue            | Commerce         | utility     | seeded market prices can be softened
+48. monopolist_tide          | Commerce         | capstone    | specialize one material category for trade advantage
+
+49. reefward                 | Wards/Protection | minor       | reduce island hazard penalties
+50. sigil_stitch             | Wards/Protection | cosmetic    | ward-themed cosmetic discovery chance
+51. safe_anvil               | Wards/Protection | crafting    | reduce risky forge-route downside
+52. lighthouse_pact          | Wards/Protection | keystone    | safer exploration, lower rare-event volatility
+
+53. echo_mark                | Echo/Memory      | minor       | remember one previous material result as a hint
+54. archive_dust             | Echo/Memory      | route       | unlock history-themed island events
+55. remembered_pattern       | Echo/Memory      | crafting    | repeated blueprint use improves consistency
+56. voice_below              | Echo/Memory      | capstone    | old routes can reveal hidden source alternatives
+
+Build-out priority
+------------------
+Suggested first 10 nodes to build for real:
+1. lucky_break
+2. steady_hammer
+3. tide_reader
+4. storm_sense
+5. black_lantern
+6. drowned_blueprint
+7. shell_counter
+8. master_socketing
+9. reefward
+10. noonday_eclipse
+
+Implementation notes for later chat
+-----------------------------------
+- Keep node data out of `cli_play.py` once it grows.
+- Suggested future files:
+  - `talents.py` for data model and unlock/evaluation logic.
+  - `talent_data.py` or JSON/YAML for all domain/node definitions.
+  - `talent_balance_reference.txt` for tuning rules and formulas.
+- Store player-owned talents as:
+  - `talents: {node_id: level}`
+  - `talent_points`
+  - `unlocked_domains`
+  - `active_keystone_by_domain`
+- Do not implement all 100 nodes per domain immediately. Use the 56 placeholders above as seed data,
+  then expand one domain at a time.
